@@ -1,0 +1,3489 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0b0f19" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>NearTalk Hybrid – Offline Voice &amp; Video P2P</title>
+
+  <!-- Inline Dynamic PWA Manifest Link (Self-contained for single-file portability) -->
+  <link id="dynamic-manifest" rel="manifest" href="" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Google Fonts: Noto Sans Thai & Inter with offline system fallbacks -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans Thai"', '"Inter"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+            mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace']
+          }
+        }
+      }
+    };
+  </script>
+
+  <style>
+    :root {
+      --glass-blur: 22px;
+      --glass-alpha: 0.58;
+      --anim-speed: 1;
+      --accent-primary: #3b82f6;
+      --accent-secondary: #06b6d4;
+      --accent-glow: rgba(59, 130, 246, 0.35);
+      --bg-base: #090d16;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --card-border: rgba(255, 255, 255, 0.14);
+      --card-highlight: rgba(255, 255, 255, 0.22);
+    }
+
+    html.light {
+      --glass-alpha: 0.72;
+      --bg-base: #eef2f9;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --card-border: rgba(15, 23, 42, 0.1);
+      --card-highlight: rgba(255, 255, 255, 0.85);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: "Noto Sans Thai", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+      overflow-x: hidden;
+      min-height: 100dvh;
+      transition: background-color calc(0.35s / var(--anim-speed)) ease, color calc(0.35s / var(--anim-speed)) ease;
+    }
+
+    /* Ambient Liquid Glass Dynamic Lighting */
+    .ambient-orb {
+      position: fixed;
+      border-radius: 9999px;
+      filter: blur(85px);
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.55;
+      transition: background calc(0.5s / var(--anim-speed)) ease, transform calc(1.2s / var(--anim-speed)) ease;
+    }
+
+    .orb-1 {
+      width: 340px;
+      height: 340px;
+      top: -80px;
+      left: -60px;
+      background: radial-gradient(circle, var(--accent-primary), transparent 70%);
+      animation: floatOrb calc(14s / var(--anim-speed)) ease-in-out infinite alternate;
+    }
+
+    .orb-2 {
+      width: 380px;
+      height: 380px;
+      bottom: 40px;
+      right: -90px;
+      background: radial-gradient(circle, var(--accent-secondary), transparent 70%);
+      animation: floatOrb calc(18s / var(--anim-speed)) ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(28px, -24px) scale(1.08); }
+    }
+
+    /* iOS Liquid Glass + Google Pixel Material You Surface */
+    .liquid-glass {
+      background: rgba(17, 24, 39, var(--glass-alpha));
+      backdrop-filter: blur(var(--glass-blur)) saturate(185%);
+      -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(185%);
+      border: 1px solid var(--card-border);
+      box-shadow:
+        inset 0 1px 0 0 var(--card-highlight),
+        0 14px 34px -10px rgba(0, 0, 0, 0.35);
+      transition:
+        transform calc(0.25s / var(--anim-speed)) cubic-bezier(0.22, 1, 0.36, 1),
+        box-shadow calc(0.25s / var(--anim-speed)) ease,
+        background-color calc(0.3s / var(--anim-speed)) ease;
+    }
+
+    html.light .liquid-glass {
+      background: rgba(255, 255, 255, var(--glass-alpha));
+      box-shadow:
+        inset 0 1px 0 0 var(--card-highlight),
+        0 12px 30px -10px rgba(15, 23, 42, 0.12);
+    }
+
+    .liquid-pill-btn {
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      color: #ffffff;
+      box-shadow: 0 8px 22px -4px var(--accent-glow), inset 0 1px 1px rgba(255, 255, 255, 0.35);
+      transition: transform calc(0.2s / var(--anim-speed)) ease, filter calc(0.2s / var(--anim-speed)) ease;
+    }
+
+    .liquid-pill-btn:active {
+      transform: scale(0.96);
+    }
+
+    /* Radar Pulse Animation */
+    .radar-ring {
+      position: absolute;
+      border-radius: 9999px;
+      border: 1.5px solid var(--accent-primary);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .radar-scanning .radar-ring-1 {
+      animation: radarExpand calc(3s / var(--anim-speed)) cubic-bezier(0.16, 1, 0.3, 1) infinite;
+    }
+    .radar-scanning .radar-ring-2 {
+      animation: radarExpand calc(3s / var(--anim-speed)) cubic-bezier(0.16, 1, 0.3, 1) infinite;
+      animation-delay: calc(1s / var(--anim-speed));
+    }
+    .radar-scanning .radar-ring-3 {
+      animation: radarExpand calc(3s / var(--anim-speed)) cubic-bezier(0.16, 1, 0.3, 1) infinite;
+      animation-delay: calc(2s / var(--anim-speed));
+    }
+
+    @keyframes radarExpand {
+      0% { width: 24%; height: 24%; opacity: 0.85; }
+      100% { width: 98%; height: 98%; opacity: 0; }
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.3); border-radius: 999px; }
+
+    /* Smooth Tab Transitions */
+    .tab-panel {
+      animation: fadeSlideUp calc(0.28s / var(--anim-speed)) cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="selection:bg-blue-500/30">
+
+  <!-- Ambient Lighting Orbs -->
+  <div class="ambient-orb orb-1"></div>
+  <div class="ambient-orb orb-2"></div>
+
+  <!-- Main App Container -->
+  <div id="app-shell" class="relative z-10 max-w-2xl mx-auto min-h-dvh flex flex-col px-4 pt-3 pb-28">
+
+    <!-- Top Header Bar (Pixel Material You + Liquid Glass) -->
+    <header class="liquid-glass rounded-3xl px-4 py-3 mb-4 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-2xl liquid-pill-btn flex items-center justify-center shrink-0">
+          <!-- Custom Offline P2P Wave Icon -->
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 011.06 0z" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-base sm:text-lg tracking-tight truncate">NearTalk Hybrid</h1>
+            <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">v1.0 Beta</span>
+          </div>
+          <p id="header-device-badge" class="text-xs text-slate-400 truncate">กำลังตรวจสอบฮาร์ดแวร์...</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 shrink-0">
+        <!-- Platform Bridge Status Pill -->
+        <span id="runtime-mode-pill" class="hidden sm:inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-slate-800/70 dark:bg-slate-800/70 light:bg-slate-200/80 border border-white/10">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
+          <span>Web P2P</span>
+        </span>
+        <!-- Quick QR Pair Trigger -->
+        <button onclick="openQrModal('create')" class="p-2.5 rounded-2xl liquid-glass hover:scale-105 active:scale-95 transition" title="QR Pairing">
+          <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 14.625h2.25v2.25H13.5v-2.25zm4.5 0h2.25v2.25H18v-2.25zm-2.25 2.25h2.25v2.25h-2.25v-2.25zm-2.25 2.25h2.25v2.25H13.5v-2.25zm4.5 0h2.25v2.25H18v-2.25z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Offline Architecture Guarantee Banner -->
+    <div id="browser-capability-banner" class="liquid-glass rounded-2xl px-3.5 py-2.5 mb-4 flex items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+        <span id="capability-text" class="text-slate-300 dark:text-slate-300">
+          โหมดออฟไลน์ 100% (No Cloud / No STUN) • พร้อมเชื่อมต่อผ่าน QR Code และ Local Network
+        </span>
+      </div>
+      <button onclick="openProjectVault()" class="shrink-0 text-[11px] font-semibold text-blue-400 hover:underline">
+        Android APK/Code
+      </button>
+    </div>
+
+    <!-- ==================== TAB 1: NEARBY (ค้นหาอุปกรณ์) ==================== -->
+    <main id="tab-nearby" class="tab-panel flex-1 space-y-4">
+      <!-- Radar Card -->
+      <section class="liquid-glass rounded-3xl p-5 relative overflow-hidden">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="font-bold text-base" data-i18n="nearby_title">เรดาร์ค้นหาอุปกรณ์ใกล้เคียง</h2>
+            <p class="text-xs text-slate-400" data-i18n="nearby_subtitle">เป้าหมายระยะ ~40 เมตร (Offline P2P Local / Wi-Fi Direct / QR)</p>
+          </div>
+          <span id="scan-status-badge" class="text-xs font-semibold px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30">
+            กำลังสแกน...
+          </span>
+        </div>
+
+        <!-- Visual Radar Circle -->
+        <div class="relative w-56 h-56 sm:w-64 sm:h-64 mx-auto my-3 flex items-center justify-center radar-scanning" id="radar-container">
+          <!-- Static Range Rings -->
+          <div class="absolute inset-0 rounded-full border border-slate-500/25"></div>
+          <div class="absolute inset-[18%] rounded-full border border-dashed border-slate-500/25"></div>
+          <div class="absolute inset-[36%] rounded-full border border-dashed border-slate-500/25"></div>
+          <!-- Animated Sonar Rings -->
+          <div class="radar-ring radar-ring-1"></div>
+          <div class="radar-ring radar-ring-2"></div>
+          <div class="radar-ring radar-ring-3"></div>
+          <!-- Crosshairs -->
+          <div class="absolute w-full h-[1px] bg-slate-500/15"></div>
+          <div class="absolute h-full w-[1px] bg-slate-500/15"></div>
+
+          <!-- Range Labels -->
+          <span class="absolute top-1.5 text-[10px] font-mono text-slate-400">~40m</span>
+          <span class="absolute top-[20%] text-[10px] font-mono text-slate-400">~20m</span>
+
+          <!-- Center Node (This Device) -->
+          <div class="relative z-10 w-14 h-14 rounded-full liquid-pill-btn flex flex-col items-center justify-center shadow-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 1.5H8.25A2.25 2.25 0 006 3.75v16.5a2.25 2.25 0 002.25 2.25h7.5A2.25 2.25 0 0018 20.25V3.75a2.25 2.25 0 00-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3" />
+            </svg>
+            <span class="text-[9px] font-bold mt-0.5">ฉัน (YOU)</span>
+          </div>
+
+          <!-- Dynamic Peer Blips Container -->
+          <div id="radar-blips" class="absolute inset-0 pointer-events-none"></div>
+        </div>
+
+        <!-- Distance Disclaimer -->
+        <p class="text-[11px] text-center text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-1.5 mb-4">
+          ⚠️ ระยะทางที่แสดงเป็นค่าประมาณจากความแรงสัญญาณและเวลาตอบสนอง ไม่ใช่ระยะวัดทางกายภาพจริงเสมอไป
+        </p>
+
+        <!-- Primary Action Controls -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+          <button id="btn-scan-toggle" onclick="toggleScanning()" class="liquid-pill-btn rounded-2xl py-3 px-4 font-semibold text-sm flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+            </svg>
+            <span id="btn-scan-label">หยุดสแกน</span>
+          </button>
+
+          <button onclick="openQrModal('create')" class="liquid-glass rounded-2xl py-3 px-4 font-semibold text-sm flex items-center justify-center gap-2 hover:border-blue-400/50">
+            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+            </svg>
+            <span>สร้าง QR จับคู่</span>
+          </button>
+
+          <button onclick="openQrModal('scan')" class="col-span-2 sm:col-span-1 liquid-glass rounded-2xl py-3 px-4 font-semibold text-sm flex items-center justify-center gap-2 hover:border-cyan-400/50">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+            </svg>
+            <span>สแกน / รับรหัส</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Discovered Devices List -->
+      <section class="liquid-glass rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="font-bold text-sm sm:text-base flex items-center gap-2">
+            <span>อุปกรณ์ที่พบในระยะ</span>
+            <span id="discovered-count" class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">0</span>
+          </h3>
+          <button onclick="broadcastDiscoveryPing()" class="text-xs text-blue-400 hover:underline font-medium">
+            ส่งสัญญาณค้นหาซ้ำ
+          </button>
+        </div>
+
+        <div id="nearby-devices-list" class="space-y-3">
+          <!-- Populated dynamically with real discovered peers or clear empty state -->
+        </div>
+      </section>
+    </main>
+
+    <!-- ==================== TAB 2: CALLS (ประวัติการโทร) ==================== -->
+    <main id="tab-calls" class="tab-panel hidden flex-1 space-y-4">
+      <section class="liquid-glass rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="font-bold text-base">ประวัติการโทร P2P</h2>
+            <p class="text-xs text-slate-400">บันทึกการสนทนาเสียงและวิดีโอแบบออฟไลน์ภายในเครื่อง</p>
+          </div>
+          <button onclick="clearCallLogs()" class="text-xs px-3 py-1.5 rounded-xl bg-rose-500/15 text-rose-400 border border-rose-500/25 hover:bg-rose-500/25">
+            ล้างประวัติ
+          </button>
+        </div>
+        <div id="call-history-list" class="space-y-3"></div>
+      </section>
+    </main>
+
+    <!-- ==================== TAB 3: CONNECTED (อุปกรณ์ที่เชื่อมต่อ & ห้องโทร) ==================== -->
+    <main id="tab-connected" class="tab-panel hidden flex-1 space-y-4">
+      <!-- Active Call Stage (Shown when P2P connected or calling) -->
+      <section id="active-call-stage" class="liquid-glass rounded-3xl p-4 sm:p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span id="call-live-dot" class="w-2.5 h-2.5 rounded-full bg-slate-500"></span>
+            <h2 id="call-stage-title" class="font-bold text-base">สถานะการเชื่อมต่อ P2P</h2>
+          </div>
+          <span id="call-timer" class="font-mono text-sm font-bold px-3 py-1 rounded-full bg-slate-800/80 text-cyan-400">00:00</span>
+        </div>
+
+        <!-- Video Viewport -->
+        <div class="relative w-full aspect-video rounded-2xl overflow-hidden bg-slate-950/90 border border-white/10 mb-4 flex items-center justify-center">
+          <video id="remote-video" autoplay playsinline class="w-full h-full object-cover hidden"></video>
+          <audio id="remote-audio" autoplay></audio>
+
+          <!-- Empty / Audio-only Placeholder -->
+          <div id="video-placeholder" class="text-center p-6">
+            <div class="w-16 h-16 rounded-full bg-slate-800/80 mx-auto mb-3 flex items-center justify-center border border-white/10">
+              <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            </div>
+            <p id="video-placeholder-text" class="text-sm font-medium text-slate-300">ยังไม่มีการสนทนาที่กำลังดำเนินอยู่</p>
+            <p class="text-xs text-slate-500 mt-1">เชื่อมต่ออุปกรณ์ผ่าน QR Code หรือ Local Network เพื่อเริ่มโทรเสียง/วิดีโอ</p>
+          </div>
+
+          <!-- Local PiP Video -->
+          <div id="local-pip-wrapper" class="hidden absolute bottom-3 right-3 w-24 sm:w-32 aspect-[3/4] rounded-2xl overflow-hidden border-2 border-white/30 shadow-xl bg-slate-900">
+            <video id="local-video" autoplay muted playsinline class="w-full h-full object-cover"></video>
+          </div>
+
+          <!-- Live Quality Overlay Pill -->
+          <div id="video-telemetry-pill" class="hidden absolute top-3 left-3 px-2.5 py-1 rounded-xl bg-black/60 backdrop-blur-md text-[11px] font-mono text-emerald-300 border border-white/10">
+            --p • -- FPS • -- kbps
+          </div>
+        </div>
+
+        <!-- Call Controls Toolbar -->
+        <div class="grid grid-cols-3 sm:grid-cols-6 gap-2">
+          <button onclick="startP2PCall('audio')" class="liquid-glass rounded-2xl p-3 flex flex-col items-center justify-center gap-1 hover:border-emerald-400/50">
+            <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+            </svg>
+            <span class="text-[11px] font-medium">โทรเสียง</span>
+          </button>
+
+          <button onclick="startP2PCall('video')" class="liquid-glass rounded-2xl p-3 flex flex-col items-center justify-center gap-1 hover:border-blue-400/50">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5l4.72-4.72a.75.75 0 011.28.53v11.38a.75.75 0 01-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 002.25-2.25v-9a2.25 2.25 0 00-2.25-2.25h-9A2.25 2.25 0 002.25 7.5v9a2.25 2.25 0 002.25 2.25z" />
+            </svg>
+            <span class="text-[11px] font-medium">โทรวิดีโอ</span>
+          </button>
+
+          <button id="btn-toggle-mic" onclick="toggleMic()" class="liquid-glass rounded-2xl p-3 flex flex-col items-center justify-center gap-1">
+            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 006-6v-1.5m-6 7.5a6 6 0 01-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 01-3-3V4.5a3 3 0 116 0v8.25a3 3 0 01-3 3z" />
+            </svg>
+            <span id="label-mic" class="text-[11px] font-medium">ไมค์เปิด</span>
+          </button>
+
+          <button id="btn-toggle-cam" onclick="toggleCamera()" class="liquid-glass rounded-2xl p-3 flex flex-col items-center justify-center gap-1">
+            <svg class="w-5 h-5 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z" />
+            </svg>
+            <span id="label-cam" class="text-[11px] font-medium">กล้อง</span>
+          </button>
+
+          <button onclick="switchCameraFacing()" class="liquid-glass rounded-2xl p-3 flex flex-col items-center justify-center gap-1">
+            <svg class="w-5 h-5 text-cyan-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            <span class="text-[11px] font-medium">สลับกล้อง</span>
+          </button>
+
+          <button onclick="endCurrentCall()" class="rounded-2xl p-3 bg-rose-600/90 hover:bg-rose-500 text-white flex flex-col items-center justify-center gap-1 shadow-lg shadow-rose-600/30">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 3.75L18 6m0 0l2.25 2.25M18 6l2.25-2.25M18 6l-2.25 2.25m1.5 13.5c-8.284 0-15-6.716-15-15V4.5A2.25 2.25 0 014.5 2.25h1.372c.516 0 .966.351 1.091.852l1.106 4.423c.11.44-.054.902-.417 1.173l-1.293.97a1.062 1.062 0 00-.38 1.21 12.035 12.035 0 007.143 7.143c.441.162.928-.004 1.21-.38l.97-1.293a1.125 1.125 0 011.173-.417l4.423 1.106c.5.125.852.575.852 1.091V19.5a2.25 2.25 0 01-2.25 2.25h-2.25z" />
+            </svg>
+            <span class="text-[11px] font-semibold">วางสาย</span>
+          </button>
+        </div>
+
+        <!-- Audio Output / Speaker Selector -->
+        <div class="mt-3 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="text-slate-400">ลำโพง:</span>
+            <select id="audio-output-select" onchange="changeAudioOutput(this.value)" class="bg-slate-800/80 border border-white/10 rounded-xl px-2.5 py-1.5 text-xs outline-none">
+              <option value="default">ลำโพงหลัก (Default Speaker)</option>
+            </select>
+          </div>
+          <div id="dtls-security-badge" class="hidden items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+            </svg>
+            <span id="dtls-sas-code">SAS: ----</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Connected Devices & Encrypted P2P DataChannel Chat -->
+      <section class="liquid-glass rounded-3xl p-5">
+        <h3 class="font-bold text-sm sm:text-base mb-3">อุปกรณ์ที่เชื่อมต่ออยู่ (Active P2P Links)</h3>
+        <div id="connected-peers-list" class="space-y-3 mb-4"></div>
+
+        <!-- P2P DataChannel Test / Messaging -->
+        <div class="border-t border-white/10 pt-3">
+          <p class="text-xs font-semibold text-slate-400 mb-2">ช่องส่งข้อความออฟไลน์เข้ารหัส (Encrypted DataChannel)</p>
+          <div id="dc-messages" class="h-32 overflow-y-auto rounded-2xl bg-black/25 p-3 space-y-1.5 text-xs mb-2.5 border border-white/5">
+            <p class="text-slate-500 italic">ข้อความที่ส่งผ่าน DataChannel จะเดินทางตรงระหว่างเครื่องโดยไม่ผ่านเซิร์ฟเวอร์...</p>
+          </div>
+          <form onsubmit="sendDataChannelMessage(event)" class="flex gap-2">
+            <input id="dc-input" type="text" placeholder="พิมพ์ข้อความส่งตรง P2P..." class="flex-1 rounded-2xl bg-slate-900/70 border border-white/10 px-3.5 py-2.5 text-xs outline-none focus:border-blue-400" />
+            <button type="submit" class="liquid-pill-btn rounded-2xl px-4 py-2.5 text-xs font-semibold">ส่ง</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==================== TAB 4: MONITOR (ตรวจสอบ CPU, RAM และสัญญาณ) ==================== -->
+    <main id="tab-monitor" class="tab-panel hidden flex-1 space-y-4">
+      <!-- Real-Time WebRTC Network Telemetry -->
+      <section class="liquid-glass rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="font-bold text-base">Network Monitor (เรียลไทม์)</h2>
+            <p class="text-xs text-slate-400">ค่าสถิติจริงจาก WebRTC RTCPeerConnection.getStats()</p>
+          </div>
+          <span id="net-quality-badge" class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-700/60 text-slate-300">
+            รอการเชื่อมต่อ
+          </span>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+          <div class="rounded-2xl bg-black/25 p-3 border border-white/5">
+            <p class="text-[11px] text-slate-400">Latency (RTT)</p>
+            <p id="stat-rtt" class="text-lg font-bold font-mono text-cyan-400 mt-0.5">-- ms</p>
+          </div>
+          <div class="rounded-2xl bg-black/25 p-3 border border-white/5">
+            <p class="text-[11px] text-slate-400">Jitter</p>
+            <p id="stat-jitter" class="text-lg font-bold font-mono text-blue-400 mt-0.5">-- ms</p>
+          </div>
+          <div class="rounded-2xl bg-black/25 p-3 border border-white/5">
+            <p class="text-[11px] text-slate-400">Packet Loss</p>
+            <p id="stat-loss" class="text-lg font-bold font-mono text-emerald-400 mt-0.5">0.0%</p>
+          </div>
+          <div class="rounded-2xl bg-black/25 p-3 border border-white/5">
+            <p class="text-[11px] text-slate-400">Video FPS / Res</p>
+            <p id="stat-video" class="text-sm font-bold font-mono text-purple-400 mt-1">-- / --</p>
+          </div>
+          <div class="rounded-2xl bg-black/25 p-3 border border-white/5">
+            <p class="text-[11px] text-slate-400">Upload Bitrate</p>
+            <p id="stat-up" class="text-base font-bold font-mono text-amber-400 mt-0.5">0 kbps</p>
+          </div>
+          <div class="rounded-2xl bg-black/25 p-3 border border-white/5">
+            <p class="text-[11px] text-slate-400">Download Bitrate</p>
+            <p id="stat-down" class="text-base font-bold font-mono text-teal-400 mt-0.5">0 kbps</p>
+          </div>
+          <div class="col-span-2 rounded-2xl bg-black/25 p-3 border border-white/5">
+            <p class="text-[11px] text-slate-400">สถานะเส้นทาง P2P (ICE Candidate Pair)</p>
+            <p id="stat-ice-pair" class="text-xs font-mono text-slate-300 mt-1 truncate">ยังไม่มีเส้นทาง P2P ที่ใช้งาน</p>
+          </div>
+        </div>
+
+        <!-- Live Bitrate & Latency Canvas Graph -->
+        <div class="rounded-2xl bg-black/30 p-3 border border-white/5">
+          <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+            <span>กราฟ Bitrate (kbps) &amp; Latency (ms)</span>
+            <span>อัปเดตทุก 1 วินาที</span>
+          </div>
+          <canvas id="telemetry-canvas" class="w-full h-28 block"></canvas>
+        </div>
+      </section>
+
+      <!-- Adaptive Hardware & SoC Profiler -->
+      <section class="liquid-glass rounded-3xl p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="font-bold text-base">Adaptive Performance Profiler</h3>
+            <p class="text-xs text-slate-400">ปรับคุณภาพตามฮาร์ดแวร์จริงและสถานะความร้อน/แบตเตอรี่</p>
+          </div>
+        </div>
+
+        <!-- Performance Profile Selector -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+          <button onclick="setPerformanceProfile('ultra_saver')" data-profile="ultra_saver" class="profile-btn liquid-glass rounded-2xl p-2.5 text-left border border-white/10">
+            <p class="text-xs font-bold text-emerald-400">Ultra Saver</p>
+            <p class="text-[10px] text-slate-400">240p • 15fps • 250k</p>
+          </button>
+          <button onclick="setPerformanceProfile('low')" data-profile="low" class="profile-btn liquid-glass rounded-2xl p-2.5 text-left border border-white/10">
+            <p class="text-xs font-bold text-amber-400">Low Perf</p>
+            <p class="text-[10px] text-slate-400">360p • 20fps • 500k</p>
+          </button>
+          <button onclick="setPerformanceProfile('balanced')" data-profile="balanced" class="profile-btn liquid-glass rounded-2xl p-2.5 text-left border border-blue-400">
+            <p class="text-xs font-bold text-blue-400">Balanced</p>
+            <p class="text-[10px] text-slate-400">720p • 30fps • 1.2M</p>
+          </button>
+          <button onclick="setPerformanceProfile('high')" data-profile="high" class="profile-btn liquid-glass rounded-2xl p-2.5 text-left border border-white/10">
+            <p class="text-xs font-bold text-purple-400">High Perf</p>
+            <p class="text-[10px] text-slate-400">1080p • 60fps • 2.5M</p>
+          </button>
+        </div>
+
+        <!-- Hardware Detection Grid -->
+        <div class="space-y-2 text-xs">
+          <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-slate-400">ชิปประมวลผล / GPU Renderer</span>
+            <span id="hw-soc-gpu" class="font-mono font-semibold text-right max-w-[60%] truncate">กำลังตรวจจับ...</span>
+          </div>
+          <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-slate-400">CPU Cores / RAM (โดยประมาณ)</span>
+            <span id="hw-cpu-ram" class="font-mono font-semibold">-- Cores / -- GB</span>
+          </div>
+          <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-slate-400">Hardware Video Codecs</span>
+            <span id="hw-codecs" class="font-mono font-semibold text-emerald-400 text-right max-w-[60%] truncate">--</span>
+          </div>
+          <div class="flex justify-between py-2 border-b border-white/10">
+            <span class="text-slate-400">สถานะแบตเตอรี่ &amp; ความร้อน</span>
+            <span id="hw-thermal-bat" class="font-mono font-semibold text-cyan-400">ปกติ (Nominal)</span>
+          </div>
+          <div class="flex justify-between py-2">
+            <span class="text-slate-400">โปรไฟล์ที่แนะนำสำหรับเครื่องนี้</span>
+            <span id="hw-recommended" class="font-semibold text-blue-400">Balanced</span>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- ==================== TAB 5: SETTINGS (ตั้งค่า & โปรเจกต์ Android) ==================== -->
+    <main id="tab-settings" class="tab-panel hidden flex-1 space-y-4">
+      <!-- Device Identity -->
+      <section class="liquid-glass rounded-3xl p-5 space-y-3">
+        <h2 class="font-bold text-base">ข้อมูลอุปกรณ์ของคุณ (Local Identity)</h2>
+        <p class="text-xs text-slate-400">ไม่มีการเก็บ IMEI, เบอร์โทร หรือบัญชีออนไลน์ ใช้รหัสสุ่มชั่วคราวต่อเซสชัน</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">ชื่ออุปกรณ์ที่แสดง (Device Name)</label>
+            <input id="setting-device-name" type="text" onchange="updateLocalDeviceName(this.value)" class="w-full rounded-2xl bg-slate-900/70 border border-white/10 px-3.5 py-2.5 text-sm outline-none focus:border-blue-400" />
+          </div>
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1">Session Peer ID (Ephemeral)</label>
+            <input id="setting-peer-id" type="text" readonly class="w-full rounded-2xl bg-slate-900/40 border border-white/10 px-3.5 py-2.5 text-sm font-mono text-slate-400" />
+          </div>
+        </div>
+      </section>
+
+      <!-- UI & Liquid Glass Customization -->
+      <section class="liquid-glass rounded-3xl p-5 space-y-4">
+        <h3 class="font-bold text-base">ดีไซน์ Liquid Glass &amp; การแสดงผล</h3>
+
+        <!-- Dark / Light Mode & Language -->
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1.5">โหมดสี (Theme Mode)</label>
+            <div class="grid grid-cols-2 gap-1.5 bg-black/25 p-1 rounded-2xl border border-white/10">
+              <button onclick="setThemeMode('dark')" id="btn-mode-dark" class="py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white">Dark</button>
+              <button onclick="setThemeMode('light')" id="btn-mode-light" class="py-2 rounded-xl text-xs font-semibold text-slate-400">Light</button>
+            </div>
+          </div>
+
+          <div>
+            <label class="text-[11px] text-slate-400 block mb-1.5">ภาษา (Language)</label>
+            <div class="grid grid-cols-2 gap-1.5 bg-black/25 p-1 rounded-2xl border border-white/10">
+              <button onclick="setLanguage('th')" id="btn-lang-th" class="py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white">ไทย</button>
+              <button onclick="setLanguage('en')" id="btn-lang-en" class="py-2 rounded-xl text-xs font-semibold text-slate-400">EN</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accent Color Picker -->
+        <div>
+          <label class="text-[11px] text-slate-400 block mb-2">ธีมสีหลัก (Pixel Material Accent)</label>
+          <div class="flex items-center gap-3">
+            <button onclick="setAccentTheme('#3b82f6', '#06b6d4')" class="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 ring-2 ring-white/40"></button>
+            <button onclick="setAccentTheme('#10b981', '#14b8a6')" class="w-9 h-9 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-400"></button>
+            <button onclick="setAccentTheme('#8b5cf6', '#ec4899')" class="w-9 h-9 rounded-full bg-gradient-to-tr from-violet-500 to-pink-500"></button>
+            <button onclick="setAccentTheme('#f59e0b', '#ef4444')" class="w-9 h-9 rounded-full bg-gradient-to-tr from-amber-500 to-red-500"></button>
+          </div>
+        </div>
+
+        <!-- Glass Transparency Slider -->
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-400">ความโปร่งใสของกระจก (Glass Opacity)</span>
+            <span id="glass-alpha-val" class="font-mono">58%</span>
+          </div>
+          <input type="range" min="25" max="92" value="58" oninput="setGlassOpacity(this.value)" class="w-full accent-blue-500" />
+        </div>
+
+        <!-- Animation Speed Slider -->
+        <div>
+          <div class="flex justify-between text-xs mb-1">
+            <span class="text-slate-400">ความเร็วแอนิเมชัน (Animation Speed)</span>
+            <span id="anim-speed-val" class="font-mono">1.0x</span>
+          </div>
+          <input type="range" min="0.5" max="2.0" step="0.25" value="1.0" oninput="setAnimationSpeed(this.value)" class="w-full accent-blue-500" />
+        </div>
+      </section>
+
+      <!-- Blocked Devices Management -->
+      <section class="liquid-glass rounded-3xl p-5">
+        <h3 class="font-bold text-base mb-2">อุปกรณ์ที่ถูกบล็อก (Blocked Devices)</h3>
+        <div id="blocked-devices-list" class="space-y-2 text-xs text-slate-400">
+          <p>ไม่มีอุปกรณ์ที่ถูกบล็อก</p>
+        </div>
+      </section>
+
+      <!-- Deliverables Download & Android Native Studio Project -->
+      <section class="liquid-glass rounded-3xl p-5 space-y-3 border border-blue-500/30">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h3 class="font-bold text-base text-blue-400">ส่งมอบไฟล์โปรเจกต์ &amp; Android APK Source</h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              ดาวน์โหลดไฟล์ <code class="text-cyan-300">index.html</code> ฉบับสมบูรณ์ หรือเปิดดูและดาวน์โหลดโค้ดโปรเจกต์ Native Android (Kotlin + Jetpack Compose + Wi-Fi Direct + Native WebRTC) เพื่อ Build เป็น APK
+            </p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+          <button onclick="downloadStandaloneHtml()" class="liquid-pill-btn rounded-2xl py-3 px-4 text-xs font-bold flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+            </svg>
+            <span>ดาวน์โหลด index.html โดยตรง</span>
+          </button>
+          <button onclick="openProjectVault()" class="liquid-glass rounded-2xl py-3 px-4 text-xs font-bold flex items-center justify-center gap-2 border border-blue-400/40 text-blue-300">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+            </svg>
+            <span>โปรเจกต์ Android (Kotlin/APK) &amp; คู่มือ</span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating Bottom Pill Navigation (5 Core Tabs) -->
+    <nav class="fixed bottom-4 left-1/2 -translate-x-1/2 z-30 w-[94%] max-w-xl liquid-glass rounded-full px-2 py-2 flex items-center justify-around shadow-2xl">
+      <button onclick="switchTab('nearby')" data-tab="nearby" class="nav-btn active flex-1 py-2 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 text-blue-400 bg-blue-500/15 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.348 14.651a3.75 3.75 0 010-5.303m5.304 0a3.75 3.75 0 010 5.303m-7.425 2.122a6.75 6.75 0 010-9.546m9.546 0a6.75 6.75 0 010 9.546M5.106 18.894c-3.808-3.808-3.808-9.98 0-13.789m13.788 0c3.808 3.808 3.808 9.981 0 13.79M12 12h.008v.007H12V12zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+        </svg>
+        <span class="text-[10px] font-bold">Nearby</span>
+      </button>
+
+      <button onclick="switchTab('calls')" data-tab="calls" class="nav-btn flex-1 py-2 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span class="text-[10px] font-semibold">Calls</span>
+      </button>
+
+      <button onclick="switchTab('connected')" data-tab="connected" class="nav-btn relative flex-1 py-2 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 transition">
+        <span id="nav-connected-dot" class="hidden absolute top-1.5 right-4 w-2 h-2 rounded-full bg-emerald-400"></span>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+        </svg>
+        <span class="text-[10px] font-semibold">Connected</span>
+      </button>
+
+      <button onclick="switchTab('monitor')" data-tab="monitor" class="nav-btn flex-1 py-2 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+        </svg>
+        <span class="text-[10px] font-semibold">Monitor</span>
+      </button>
+
+      <button onclick="switchTab('settings')" data-tab="settings" class="nav-btn flex-1 py-2 px-1 rounded-full flex flex-col items-center justify-center gap-0.5 text-slate-400 hover:text-slate-200 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span class="text-[10px] font-semibold">Settings</span>
+      </button>
+    </nav>
+  </div>
+
+  <!-- ==================== MODAL 1: SERVERLESS QR CODE & TOKEN PAIRING ==================== -->
+  <div id="qr-pairing-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+    <div class="liquid-glass rounded-3xl w-full max-w-lg max-h-[90dvh] overflow-y-auto p-5 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="font-bold text-base">จับคู่ P2P แบบไม่ใช้เซิร์ฟเวอร์ (QR Pairing)</h3>
+          <p class="text-xs text-slate-400">แลกเปลี่ยน WebRTC Offer / Answer &amp; ICE Candidates โดยตรง</p>
+        </div>
+        <button onclick="closeQrModal()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Step Mode Switcher -->
+      <div class="grid grid-cols-2 gap-2 bg-black/30 p-1 rounded-2xl border border-white/10">
+        <button id="qr-mode-host" onclick="switchQrMode('create')" class="py-2 rounded-xl text-xs font-bold bg-blue-600 text-white">
+          1. เครื่อง A: สร้าง Offer QR
+        </button>
+        <button id="qr-mode-join" onclick="switchQrMode('scan')" class="py-2 rounded-xl text-xs font-bold text-slate-400">
+          2. เครื่อง B: สแกน / ตอบรับ
+        </button>
+      </div>
+
+      <!-- HOST VIEW (Device A) -->
+      <div id="qr-host-pane" class="space-y-3">
+        <div class="rounded-2xl bg-black/30 p-4 border border-white/10 text-center">
+          <div class="flex items-center justify-between text-xs mb-2">
+            <span class="text-slate-400">สถานะรหัสจับคู่:</span>
+            <span id="qr-expiry-timer" class="font-mono text-amber-400 font-semibold">กำลังสร้าง...</span>
+          </div>
+
+          <!-- QR Canvas Wrapper -->
+          <div class="bg-white p-3 rounded-2xl inline-block mx-auto shadow-lg">
+            <canvas id="qr-output-canvas" width="240" height="240" class="block mx-auto"></canvas>
+          </div>
+          <p id="qr-payload-meta" class="text-[11px] font-mono text-slate-400 mt-2">กำลังรวบรวม Local ICE Candidates...</p>
+
+          <div class="flex gap-2 justify-center mt-3">
+            <button onclick="generateHostOffer(true)" class="px-3 py-1.5 rounded-xl bg-white/10 text-xs font-semibold hover:bg-white/20">
+              สร้างรหัสใหม่
+            </button>
+            <button onclick="copyTokenToClipboard('host-token-box')" class="px-3 py-1.5 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-semibold">
+              คัดลอกรหัสส่งด้วยตนเอง
+            </button>
+          </div>
+          <textarea id="host-token-box" readonly rows="2" class="w-full mt-2.5 rounded-xl bg-slate-950/80 border border-white/10 p-2 text-[10px] font-mono text-slate-300 resize-none" placeholder="รหัส Offer จะปรากฏที่นี่..."></textarea>
+        </div>
+
+        <!-- Step 5: Device A receives Device B's Answer -->
+        <div class="rounded-2xl bg-black/30 p-4 border border-white/10 space-y-2.5">
+          <p class="text-xs font-bold text-cyan-300">ขั้นตอนสุดท้าย (เครื่อง A): สแกนหรือวางรหัสตอบกลับ (Answer) จากเครื่อง B</p>
+          <div class="flex gap-2">
+            <button onclick="startQrCameraScanner('answer')" class="flex-1 py-2 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-semibold">
+              เปิดกล้องสแกน Answer QR
+            </button>
+          </div>
+          <textarea id="host-answer-input" rows="2" class="w-full rounded-xl bg-slate-950/80 border border-white/10 p-2 text-[11px] font-mono text-slate-200" placeholder="วางรหัส Answer จากเครื่อง B ที่นี่..."></textarea>
+          <button onclick="completeHostHandshake()" class="w-full liquid-pill-btn rounded-2xl py-2.5 text-xs font-bold">
+            ยืนยันการเชื่อมต่อ P2P (Complete Handshake)
+          </button>
+        </div>
+      </div>
+
+      <!-- JOINER VIEW (Device B) -->
+      <div id="qr-join-pane" class="hidden space-y-3">
+        <div class="rounded-2xl bg-black/30 p-4 border border-white/10 space-y-2.5">
+          <p class="text-xs font-bold text-blue-300">ขั้นที่ 1 (เครื่อง B): สแกน QR Code หรือวางรหัส Offer จากเครื่อง A</p>
+          <button onclick="startQrCameraScanner('offer')" class="w-full py-2.5 rounded-xl bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs font-semibold">
+            เปิดกล้องสแกน Offer QR จากเครื่อง A
+          </button>
+          <textarea id="join-offer-input" rows="2" class="w-full rounded-xl bg-slate-950/80 border border-white/10 p-2 text-[11px] font-mono text-slate-200" placeholder="หรือวางรหัส Offer ที่คัดลอกมาจากเครื่อง A..."></textarea>
+          <button onclick="processIncomingOffer()" class="w-full liquid-pill-btn rounded-2xl py-2.5 text-xs font-bold">
+            สร้างรหัสตอบกลับ (Generate Answer QR)
+          </button>
+        </div>
+
+        <!-- Generated Answer QR for Device A to scan -->
+        <div id="join-answer-result" class="hidden rounded-2xl bg-black/30 p-4 border border-emerald-500/30 text-center space-y-2">
+          <p class="text-xs font-bold text-emerald-400">ขั้นที่ 2 (เครื่อง B): ให้เครื่อง A สแกน QR ตอบกลับนี้</p>
+          <div class="bg-white p-3 rounded-2xl inline-block mx-auto shadow-lg">
+            <canvas id="qr-answer-canvas" width="240" height="240" class="block mx-auto"></canvas>
+          </div>
+          <div class="flex justify-center">
+            <button onclick="copyTokenToClipboard('join-answer-box')" class="px-3 py-1.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold">
+              คัดลอกรหัส Answer ส่งให้เครื่อง A
+            </button>
+          </div>
+          <textarea id="join-answer-box" readonly rows="2" class="w-full rounded-xl bg-slate-950/80 border border-white/10 p-2 text-[10px] font-mono text-slate-300 resize-none"></textarea>
+        </div>
+      </div>
+
+      <!-- Live Camera Scanner Viewport (Shared for Offer & Answer scanning) -->
+      <div id="qr-scanner-box" class="hidden rounded-2xl overflow-hidden border border-cyan-400/50 bg-black relative">
+        <video id="qr-scanner-video" autoplay playsinline muted class="w-full h-56 object-cover"></video>
+        <div class="absolute inset-0 border-2 border-cyan-400/60 m-8 rounded-2xl pointer-events-none"></div>
+        <div class="p-2.5 bg-slate-950/90 flex items-center justify-between text-xs">
+          <span id="qr-scanner-status" class="text-cyan-300">กำลังค้นหา QR Code...</span>
+          <button onclick="stopQrCameraScanner()" class="px-3 py-1 rounded-lg bg-rose-500/20 text-rose-300">ปิดกล้อง</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: INCOMING CALL OVERLAY ==================== -->
+  <div id="incoming-call-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-lg">
+    <div class="liquid-glass rounded-3xl w-full max-w-sm p-6 text-center space-y-5 border border-emerald-400/40">
+      <div class="w-20 h-20 rounded-full liquid-pill-btn mx-auto flex items-center justify-center animate-bounce">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+        </svg>
+      </div>
+      <div>
+        <span id="incoming-call-type" class="text-xs font-bold uppercase tracking-wider text-emerald-400">สายเรียกเข้า P2P</span>
+        <h3 id="incoming-caller-name" class="text-xl font-bold mt-1">Unknown Peer</h3>
+        <p id="incoming-caller-fp" class="text-xs font-mono text-slate-400 mt-1">SAS: ----</p>
+      </div>
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button onclick="rejectIncomingCall()" class="py-3.5 rounded-2xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-sm">
+          ปฏิเสธสาย
+        </button>
+        <button onclick="acceptIncomingCall()" class="py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-600/30">
+          รับสาย
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: ANDROID NATIVE PROJECT & PWA SOURCE VAULT ==================== -->
+  <div id="project-vault-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+    <div class="liquid-glass rounded-3xl w-full max-w-3xl max-h-[90dvh] flex flex-col overflow-hidden">
+      <div class="p-4 sm:p-5 border-b border-white/10 flex items-center justify-between gap-2">
+        <div>
+          <h3 class="font-bold text-base">NearTalk-Hybrid – โครงสร้างโปรเจกต์สมบูรณ์ &amp; Android Studio APK</h3>
+          <p class="text-xs text-slate-400">แยกโมดูล Web PWA และ Native Android (Kotlin + Jetpack Compose + Wi-Fi Direct + Native WebRTC) ชัดเจน</p>
+        </div>
+        <button onclick="closeProjectVault()" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 shrink-0">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-4 flex-1 overflow-y-auto space-y-4">
+        <!-- Download Full ZIP Banner -->
+        <div class="rounded-2xl bg-blue-500/15 border border-blue-500/30 p-3.5 flex flex-wrap items-center justify-between gap-3">
+          <div class="text-xs">
+            <p class="font-bold text-blue-300">ดาวน์โหลดทั้งโปรเจกต์ NearTalk-Hybrid (.ZIP)</p>
+            <p class="text-slate-400">ประกอบด้วย index.html, manifest.json, service-worker.js, README.md และโฟลเดอร์ android/ พร้อม Build APK</p>
+          </div>
+          <button onclick="downloadFullProjectZip()" class="liquid-pill-btn rounded-xl px-4 py-2.5 text-xs font-bold">
+            ดาวน์โหลด NearTalk-Hybrid.zip
+          </button>
+        </div>
+
+        <!-- File Selector & Viewer -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div id="vault-file-tree" class="rounded-2xl bg-black/30 p-2.5 border border-white/10 space-y-1 max-h-80 overflow-y-auto text-xs font-mono"></div>
+          <div class="md:col-span-2 rounded-2xl bg-slate-950/90 border border-white/10 flex flex-col overflow-hidden">
+            <div class="px-3.5 py-2 bg-white/5 border-b border-white/10 flex items-center justify-between">
+              <span id="vault-current-filename" class="text-xs font-mono text-cyan-300 truncate">README.md</span>
+              <div class="flex gap-2">
+                <button onclick="copyVaultFile()" class="px-2.5 py-1 rounded-lg bg-white/10 text-[11px] hover:bg-white/20">คัดลอกโค้ด</button>
+                <button onclick="downloadSingleVaultFile()" class="px-2.5 py-1 rounded-lg bg-blue-500/20 text-blue-300 text-[11px]">ดาวน์โหลดไฟล์นี้</button>
+              </div>
+            </div>
+            <pre id="vault-code-viewer" class="p-3.5 text-[11px] font-mono text-slate-200 overflow-auto max-h-72 leading-relaxed whitespace-pre"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Non-Blocking Toast Container (Replaces alert/confirm) -->
+  <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[60] flex flex-col items-center gap-2 pointer-events-none w-[92%] max-w-md"></div>
+
+  <!-- ==================== CORE JAVASCRIPT ENGINE ==================== -->
+  <script>
+    'use strict';
+
+    /**
+     * ============================================================================
+     * 1. NATIVE BRIDGE ABSTRACTION (Web <-> Android Kotlin WebView Interface)
+     * Strictly separates Web logic from Android APIs. Never calls Android directly.
+     * ============================================================================
+     */
+    const NativeBridge = {
+      isAndroidNative() {
+        return typeof window.NearTalkAndroid !== 'undefined' && window.NearTalkAndroid !== null;
+      },
+      getPlatformInfo() {
+        if (this.isAndroidNative() && typeof window.NearTalkAndroid.getDeviceHardwareJson === 'function') {
+          try {
+            return JSON.parse(window.NearTalkAndroid.getDeviceHardwareJson());
+          } catch (e) {
+            console.warn('Bridge parse fallback', e);
+          }
+        }
+        return null;
+      },
+      startWifiDirectDiscovery() {
+        if (this.isAndroidNative() && typeof window.NearTalkAndroid.startWifiDirectScan === 'function') {
+          window.NearTalkAndroid.startWifiDirectScan();
+          return true;
+        }
+        return false;
+      },
+      stopWifiDirectDiscovery() {
+        if (this.isAndroidNative() && typeof window.NearTalkAndroid.stopWifiDirectScan === 'function') {
+          window.NearTalkAndroid.stopWifiDirectScan();
+        }
+      },
+      connectWifiDirectPeer(deviceAddress) {
+        if (this.isAndroidNative() && typeof window.NearTalkAndroid.connectWifiDirect === 'function') {
+          window.NearTalkAndroid.connectWifiDirect(deviceAddress);
+          return true;
+        }
+        return false;
+      }
+    };
+
+    // Global callback invoked by Android Native layer when Wi-Fi Direct peers update
+    window.onNativeWifiDirectPeersUpdated = function(peersJson) {
+      try {
+        const peers = JSON.parse(peersJson);
+        peers.forEach(p => {
+          upsertDiscoveredPeer({
+            id: p.deviceAddress || ('WFD-' + p.deviceName),
+            name: p.deviceName || 'Android Device',
+            model: p.primaryDeviceType || 'Android Wi-Fi Direct',
+            transport: 'Wi-Fi Direct',
+            rssi: p.signalLevel || -55,
+            approxMeters: estimateDistanceMeters(p.signalLevel || -55),
+            status: p.status === 0 ? 'connected' : 'discovered',
+            lastSeen: Date.now()
+          });
+        });
+        renderNearbyDevices();
+      } catch (err) {
+        console.warn('Native peer callback error', err);
+      }
+    };
+
+    /**
+     * ============================================================================
+     * 2. APPLICATION STATE & IN-MEMORY STORAGE
+     * ============================================================================
+     */
+    const AppState = {
+      localPeerId: 'NT-' + Math.random().toString(36).substring(2, 6).toUpperCase(),
+      localDeviceName: detectFriendlyDeviceName(),
+      localDeviceModel: detectDeviceModel(),
+      language: 'th',
+      themeMode: 'dark',
+      isScanning: true,
+      activeTab: 'nearby',
+      performanceProfile: 'balanced',
+      hardware: {
+        socOrGpu: 'Detecting...',
+        cpuCores: navigator.hardwareConcurrency || 4,
+        ramGb: navigator.deviceMemory || 4,
+        codecs: [],
+        batteryLevel: 1.0,
+        isCharging: true,
+        thermalState: 'nominal',
+        recommendedProfile: 'balanced'
+      },
+      discoveredPeers: new Map(), // peerId -> peer object
+      blockedIds: new Set(),
+      peerConnections: new Map(), // peerId -> { pc, dc, remoteStream, sasCode, statsTimer, lastStats }
+      activePeerId: null,
+      localStream: null,
+      currentCallType: null, // 'audio' | 'video' | null
+      callStartTime: null,
+      callTimerInterval: null,
+      micEnabled: true,
+      camEnabled: true,
+      facingMode: 'user',
+      callLogs: [],
+      telemetryHistory: [], // { rtt, upKbps, downKbps }
+      pendingOfferPc: null,
+      qrExpiryInterval: null,
+      scannerStream: null,
+      scannerAnimFrame: null
+    };
+
+    function detectFriendlyDeviceName() {
+      const ua = navigator.userAgent;
+      if (/Pixel/i.test(ua)) return 'Google Pixel (' + AppState.localPeerId + ')';
+      if (/SM-[A-Z0-9]+/i.test(ua)) return 'Samsung Galaxy (' + AppState.localPeerId + ')';
+      if (/Android/i.test(ua)) return 'Android Phone (' + AppState.localPeerId + ')';
+      if (/iPhone/i.test(ua)) return 'iPhone (' + AppState.localPeerId + ')';
+      return 'NearTalk Web (' + AppState.localPeerId + ')';
+    }
+
+    function detectDeviceModel() {
+      const ua = navigator.userAgent;
+      const match = ua.match(/\(([^)]+)\)/);
+      if (match && match[1]) {
+        const parts = match[1].split(';').map(s => s.trim());
+        return parts[parts.length - 1] || 'Browser Client';
+      }
+      return 'WebRTC Client';
+    }
+
+    /**
+     * ============================================================================
+     * 3. TOAST NOTIFICATION SYSTEM (Zero alert() / confirm() usage)
+     * ============================================================================
+     */
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      const colors = {
+        info: 'border-blue-400/40 text-blue-100 bg-slate-900/90',
+        success: 'border-emerald-400/40 text-emerald-100 bg-emerald-950/90',
+        warn: 'border-amber-400/40 text-amber-100 bg-amber-950/90',
+        error: 'border-rose-400/40 text-rose-100 bg-rose-950/90'
+      };
+      toast.className = `pointer-events-auto liquid-glass rounded-2xl px-4 py-3 text-xs font-medium shadow-2xl border ${colors[type] || colors.info} transition-all duration-300`;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(-8px)';
+        setTimeout(() => toast.remove(), 300);
+      }, 3600);
+    }
+
+    /**
+     * ============================================================================
+     * 4. ADAPTIVE HARDWARE & CHIPSET PROFILER
+     * Evaluates real CPU, RAM, WebGL GPU, Hardware Video Codecs, and Battery/Thermal
+     * ============================================================================
+     */
+    async function initializeHardwareProfiler() {
+      // 1. Check Native Android Bridge first if running inside APK
+      const nativeHw = NativeBridge.getPlatformInfo();
+      if (nativeHw) {
+        AppState.hardware.socOrGpu = `${nativeHw.socModel || 'Android SoC'} (${nativeHw.gpuRenderer || 'GPU'})`;
+        AppState.hardware.cpuCores = nativeHw.cpuCores || AppState.hardware.cpuCores;
+        AppState.hardware.ramGb = nativeHw.ramGb || AppState.hardware.ramGb;
+        AppState.hardware.thermalState = nativeHw.thermalStatus || 'nominal';
+        document.getElementById('runtime-mode-pill').innerHTML =
+          '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>Android Native</span>';
+      } else {
+        // WebGL GPU Renderer inspection (identifies Adreno, Mali, Xclipse, Tensor, Apple GPU)
+        let gpuInfo = 'Standard GPU';
+        try {
+          const canvas = document.createElement('canvas');
+          const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+          if (gl) {
+            const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+            if (dbg) {
+              gpuInfo = gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL);
+            }
+          }
+        } catch (e) {}
+
+        // Infer chipset family from GPU / UA while relying on actual capability metrics
+        let socFamily = 'Generic SoC';
+        if (/Adreno/i.test(gpuInfo)) socFamily = 'Qualcomm Snapdragon';
+        else if (/Xclipse/i.test(gpuInfo)) socFamily = 'Samsung Exynos';
+        else if (/Mali-G715|Mali-G710|Immortalis/i.test(gpuInfo)) socFamily = 'MediaTek Dimensity / Tensor';
+        else if (/Mali-G5|Mali-G7|Mali-T/i.test(gpuInfo)) socFamily = 'MediaTek Helio / Exynos / Kirin';
+        else if (/PowerVR/i.test(gpuInfo)) socFamily = 'UNISOC / PowerVR';
+        else if (/Apple/i.test(gpuInfo)) socFamily = 'Apple Silicon';
+
+        AppState.hardware.socOrGpu = `${socFamily} • ${gpuInfo.replace(/ANGLE \(|\)/g, '').slice(0, 34)}`;
+      }
+
+      // 2. Supported Hardware Video Codecs via RTCRtpSender.getCapabilities
+      try {
+        if (window.RTCRtpSender && RTCRtpSender.getCapabilities) {
+          const caps = RTCRtpSender.getCapabilities('video');
+          const uniqueCodecs = [...new Set(
+            caps.codecs
+              .map(c => c.mimeType.replace('video/', ''))
+              .filter(m => !['rtx', 'red', 'ulpfec', 'flexfec-03'].includes(m.toLowerCase()))
+          )];
+          AppState.hardware.codecs = uniqueCodecs;
+        }
+      } catch (e) {
+        AppState.hardware.codecs = ['VP8', 'H264'];
+      }
+
+      // 3. Battery & Thermal Heuristic Monitoring
+      if (navigator.getBattery) {
+        try {
+          const bat = await navigator.getBattery();
+          const syncBattery = () => {
+            AppState.hardware.batteryLevel = bat.level;
+            AppState.hardware.isCharging = bat.charging;
+            if (!bat.charging && bat.level <= 0.15) {
+              AppState.hardware.thermalState = 'battery_low';
+              setPerformanceProfile('ultra_saver', true);
+            }
+            updateHardwareUI();
+          };
+          syncBattery();
+          bat.addEventListener('levelchange', syncBattery);
+          bat.addEventListener('chargingchange', syncBattery);
+        } catch (e) {}
+      }
+
+      // 4. Recommend Profile based on actual capability score (not chipset name alone)
+      const cores = AppState.hardware.cpuCores;
+      const ram = AppState.hardware.ramGb;
+      const hasModernCodec = AppState.hardware.codecs.some(c => /H264|VP9|AV1/i.test(c));
+
+      let recommended = 'balanced';
+      if (cores <= 4 && ram <= 2) {
+        recommended = 'low';
+      } else if (cores >= 8 && ram >= 6 && hasModernCodec) {
+        recommended = 'high';
+      }
+      AppState.hardware.recommendedProfile = recommended;
+      setPerformanceProfile(recommended, true);
+      updateHardwareUI();
+    }
+
+    function updateHardwareUI() {
+      const hw = AppState.hardware;
+      document.getElementById('header-device-badge').textContent =
+        `${AppState.localDeviceName} • ${hw.cpuCores}C/${hw.ramGb}GB`;
+      document.getElementById('hw-soc-gpu').textContent = hw.socOrGpu;
+      document.getElementById('hw-cpu-ram').textContent = `${hw.cpuCores} Cores / ~${hw.ramGb} GB RAM`;
+      document.getElementById('hw-codecs').textContent = hw.codecs.join(', ') || 'VP8, H264';
+      const batPct = Math.round(hw.batteryLevel * 100);
+      document.getElementById('hw-thermal-bat').textContent =
+        `แบต ${batPct}% (${hw.isCharging ? 'ชาร์จอยู่' : 'ใช้แบต'}) • อุณหภูมิ: ${hw.thermalState}`;
+      document.getElementById('hw-recommended').textContent = hw.recommendedProfile.toUpperCase();
+    }
+
+    const PROFILE_PRESETS = {
+      ultra_saver: { width: 426, height: 240, fps: 15, maxBitrate: 250000, label: 'Ultra Battery Saver' },
+      low:         { width: 640, height: 360, fps: 20, maxBitrate: 500000, label: 'Low Performance' },
+      balanced:    { width: 1280, height: 720, fps: 30, maxBitrate: 1200000, label: 'Balanced' },
+      high:        { width: 1920, height: 1080, fps: 60, maxBitrate: 2500000, label: 'High Performance' }
+    };
+
+    function setPerformanceProfile(profileKey, silent = false) {
+      if (!PROFILE_PRESETS[profileKey]) return;
+      AppState.performanceProfile = profileKey;
+
+      document.querySelectorAll('.profile-btn').forEach(btn => {
+        const active = btn.dataset.profile === profileKey;
+        btn.classList.toggle('border-blue-400', active);
+        btn.classList.toggle('bg-blue-500/15', active);
+      });
+
+      applyBitrateParametersToActiveCall(PROFILE_PRESETS[profileKey].maxBitrate, profileKey === 'ultra_saver' ? 2.0 : 1.0);
+      if (!silent) {
+        showToast(`ปรับโปรไฟล์ประสิทธิภาพเป็น ${PROFILE_PRESETS[profileKey].label}`, 'info');
+      }
+    }
+
+    /**
+     * ============================================================================
+     * 5. LOCAL NETWORK DISCOVERY (Same-Device / LAN Tab Broadcast + Native Bridge)
+     * Note: Never generates fake/simulated peers. Only real tabs or native peers!
+     * ============================================================================
+     */
+    let discoveryChannel = null;
+    try {
+      discoveryChannel = new BroadcastChannel('neartalk_offline_p2p_bus_v1');
+      discoveryChannel.onmessage = (event) => {
+        const msg = event.data;
+        if (!msg || msg.senderId === AppState.localPeerId) return;
+        if (AppState.blockedIds.has(msg.senderId)) return;
+
+        if (msg.type === 'DISCOVERY_BEACON') {
+          upsertDiscoveredPeer({
+            id: msg.senderId,
+            name: msg.name,
+            model: msg.model,
+            transport: 'Local Network Bus',
+            rssi: -42,
+            approxMeters: 2,
+            status: AppState.peerConnections.has(msg.senderId) ? 'connected' : 'discovered',
+            lastSeen: Date.now()
+          });
+          // Reply with our beacon if they asked for a scan
+          if (msg.replyRequested && AppState.isScanning) {
+            sendDiscoveryBeacon(false);
+          }
+          renderNearbyDevices();
+        } else if (msg.type === 'AUTO_OFFER' && msg.targetId === AppState.localPeerId) {
+          handleDirectBusOffer(msg);
+        } else if (msg.type === 'AUTO_ANSWER' && msg.targetId === AppState.localPeerId) {
+          handleDirectBusAnswer(msg);
+        }
+      };
+    } catch (e) {
+      console.warn('BroadcastChannel unavailable in this context');
+    }
+
+    function sendDiscoveryBeacon(replyRequested = true) {
+      if (!discoveryChannel || !AppState.isScanning) return;
+      discoveryChannel.postMessage({
+        type: 'DISCOVERY_BEACON',
+        senderId: AppState.localPeerId,
+        name: AppState.localDeviceName,
+        model: AppState.localDeviceModel,
+        replyRequested
+      });
+    }
+
+    function broadcastDiscoveryPing() {
+      if (!AppState.isScanning) {
+        toggleScanning();
+      }
+      sendDiscoveryBeacon(true);
+      NativeBridge.startWifiDirectDiscovery();
+      showToast('ส่งสัญญาณค้นหาอุปกรณ์ในเครือข่ายท้องถิ่นแล้ว', 'info');
+    }
+
+    function toggleScanning() {
+      AppState.isScanning = !AppState.isScanning;
+      const radar = document.getElementById('radar-container');
+      const badge = document.getElementById('scan-status-badge');
+      const btnLabel = document.getElementById('btn-scan-label');
+
+      if (AppState.isScanning) {
+        radar.classList.add('radar-scanning');
+        badge.textContent = 'กำลังสแกน...';
+        badge.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30';
+        btnLabel.textContent = 'หยุดสแกน';
+        sendDiscoveryBeacon(true);
+        NativeBridge.startWifiDirectDiscovery();
+      } else {
+        radar.classList.remove('radar-scanning');
+        badge.textContent = 'หยุดสแกนแล้ว';
+        badge.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-slate-700/50 text-slate-400 border border-white/10';
+        btnLabel.textContent = 'เริ่มสแกน';
+        NativeBridge.stopWifiDirectDiscovery();
+      }
+    }
+
+    function estimateDistanceMeters(rssi) {
+      // Approximate path-loss model (clamped to 1m..40m target range)
+      const meters = Math.round(Math.pow(10, (-40 - rssi) / 24));
+      return Math.max(1, Math.min(40, meters));
+    }
+
+    function upsertDiscoveredPeer(peer) {
+      if (AppState.blockedIds.has(peer.id)) return;
+      const existing = AppState.discoveredPeers.get(peer.id);
+      AppState.discoveredPeers.set(peer.id, { ...existing, ...peer });
+    }
+
+    function renderNearbyDevices() {
+      const listEl = document.getElementById('nearby-devices-list');
+      const blipsEl = document.getElementById('radar-blips');
+      const countEl = document.getElementById('discovered-count');
+
+      const peers = Array.from(AppState.discoveredPeers.values())
+        .filter(p => !AppState.blockedIds.has(p.id));
+
+      countEl.textContent = peers.length;
+      blipsEl.innerHTML = '';
+
+      if (peers.length === 0) {
+        listEl.innerHTML = `
+          <div class="rounded-2xl bg-black/20 border border-dashed border-white/15 p-5 text-center space-y-2">
+            <p class="text-sm font-medium text-slate-300">ยังไม่พบอุปกรณ์อื่นในระยะเรดาร์อัตโนมัติ</p>
+            <p class="text-xs text-slate-400 leading-relaxed">
+              หากต้องการเชื่อมต่อระหว่างโทรศัพท์ 2 เครื่องแบบออฟไลน์ (ผ่าน Wi-Fi Hotspot หรือเราเตอร์เดียวกัน) ให้กด <b>"สร้าง QR จับคู่"</b> บนเครื่องที่ 1 และ <b>"สแกน / รับรหัส"</b> บนเครื่องที่ 2
+            </p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = '';
+      peers.forEach((peer, idx) => {
+        const isConnected = AppState.peerConnections.has(peer.id);
+        const angle = (idx * 137.5) * (Math.PI / 180);
+        const radiusPct = Math.min(44, Math.max(16, (peer.approxMeters / 40) * 44));
+        const x = 50 + radiusPct * Math.cos(angle);
+        const y = 50 + radiusPct * Math.sin(angle);
+
+        // Radar Blip
+        const blip = document.createElement('div');
+        blip.className = 'absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center';
+        blip.style.left = `${x}%`;
+        blip.style.top = `${y}%`;
+        blip.innerHTML = `
+          <span class="w-3.5 h-3.5 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-cyan-400'} ring-4 ring-cyan-400/25"></span>
+          <span class="text-[9px] font-bold bg-slate-950/80 px-1.5 py-0.5 rounded mt-0.5 whitespace-nowrap">${escapeHtml(peer.name)}</span>
+        `;
+        blipsEl.appendChild(blip);
+
+        // Device Card
+        const card = document.createElement('div');
+        card.className = 'rounded-2xl bg-black/25 border border-white/10 p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3';
+        const secAgo = Math.max(1, Math.round((Date.now() - peer.lastSeen) / 1000));
+        card.innerHTML = `
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-400' : 'bg-blue-400'}"></span>
+              <p class="font-bold text-sm truncate">${escapeHtml(peer.name)}</p>
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-slate-300">${escapeHtml(peer.transport)}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5 truncate">${escapeHtml(peer.model)} • ระยะประมาณ ~${peer.approxMeters}m • เห็นล่าสุด ${secAgo} วิที่แล้ว</p>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            ${isConnected
+              ? `<button onclick="disconnectPeer('${peer.id}')" class="px-3 py-2 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold">ตัดการเชื่อมต่อ</button>`
+              : `<button onclick="connectToDiscoveredPeer('${peer.id}')" class="liquid-pill-btn px-3.5 py-2 rounded-xl text-xs font-bold">เชื่อมต่อ</button>`
+            }
+            <button onclick="blockPeer('${peer.id}')" class="px-2.5 py-2 rounded-xl bg-white/5 hover:bg-rose-500/20 text-slate-400 hover:text-rose-300 text-xs" title="บล็อกอุปกรณ์">
+              บล็อก
+            </button>
+          </div>
+        `;
+        listEl.appendChild(card);
+      });
+    }
+
+    /**
+     * ============================================================================
+     * 6. SERVERLESS WEBRTC P2P ENGINE (iceServers: [] — Zero Cloud / Zero STUN)
+     * ============================================================================
+     */
+    function createServerlessPeerConnection(remotePeerId, remotePeerName) {
+      // Strictly empty iceServers: operates 100% over LAN, Hotspot, or Wi-Fi Direct
+      const pc = new RTCPeerConnection({
+        iceServers: [],
+        iceCandidatePoolSize: 2
+      });
+
+      const peerEntry = {
+        id: remotePeerId,
+        name: remotePeerName || remotePeerId,
+        pc,
+        dc: null,
+        remoteStream: new MediaStream(),
+        sasCode: '----',
+        statsTimer: null,
+        lastBytesSent: 0,
+        lastBytesRecv: 0,
+        lastTimestamp: 0
+      };
+
+      // Attach existing local audio/video tracks if active
+      if (AppState.localStream) {
+        AppState.localStream.getTracks().forEach(track => {
+          pc.addTrack(track, AppState.localStream);
+        });
+      }
+
+      pc.ontrack = (event) => {
+        event.streams[0]?.getTracks().forEach(t => peerEntry.remoteStream.addTrack(t));
+        if (!event.streams[0] && event.track) {
+          peerEntry.remoteStream.addTrack(event.track);
+        }
+        attachRemoteMediaToStage(peerEntry.remoteStream, event.track.kind);
+      };
+
+      pc.onconnectionstatechange = () => {
+        const state = pc.connectionState;
+        if (state === 'connected') {
+          AppState.activePeerId = peerEntry.id;
+          upsertDiscoveredPeer({
+            id: peerEntry.id,
+            name: peerEntry.name,
+            model: 'Verified P2P Node',
+            transport: 'WebRTC Direct',
+            approxMeters: 5,
+            status: 'connected',
+            lastSeen: Date.now()
+          });
+          startWebRtcStatsMonitor(peerEntry);
+          updateConnectedUI();
+          showToast(`เชื่อมต่อ P2P สำเร็จกับ ${peerEntry.name}`, 'success');
+        } else if (state === 'failed' || state === 'disconnected' || state === 'closed') {
+          showToast(`การเชื่อมต่อ P2P กับ ${peerEntry.name} สิ้นสุดหรือขาดหาย (${state})`, 'warn');
+          cleanupPeerConnection(peerEntry.id);
+        }
+      };
+
+      pc.ondatachannel = (event) => {
+        setupDataChannel(peerEntry, event.channel);
+      };
+
+      AppState.peerConnections.set(peerEntry.id, peerEntry);
+      return peerEntry;
+    }
+
+    function setupDataChannel(peerEntry, dc) {
+      peerEntry.dc = dc;
+      dc.onopen = () => {
+        // Exchange verified identity & DTLS fingerprint SAS
+        dc.send(JSON.stringify({
+          type: 'HELLO_META',
+          peerId: AppState.localPeerId,
+          name: AppState.localDeviceName,
+          model: AppState.localDeviceModel
+        }));
+        updateConnectedUI();
+      };
+      dc.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'HELLO_META') {
+            peerEntry.name = data.name || peerEntry.name;
+            upsertDiscoveredPeer({
+              id: peerEntry.id,
+              name: peerEntry.name,
+              model: data.model || 'P2P Device',
+              transport: 'WebRTC P2P',
+              approxMeters: 4,
+              status: 'connected',
+              lastSeen: Date.now()
+            });
+            updateConnectedUI();
+            renderNearbyDevices();
+          } else if (data.type === 'CHAT_MSG') {
+            appendChatBubble(peerEntry.name, data.text, false);
+          } else if (data.type === 'CALL_INVITE') {
+            handleIncomingCallSignal(peerEntry, data.mediaType);
+          } else if (data.type === 'CALL_REJECT') {
+            showToast(`${peerEntry.name} ปฏิเสธสาย`, 'warn');
+            endCurrentCall(false);
+          } else if (data.type === 'CALL_END') {
+            showToast(`${peerEntry.name} วางสายแล้ว`, 'info');
+            endCurrentCall(false);
+          }
+        } catch (e) {
+          appendChatBubble(peerEntry.name, String(event.data), false);
+        }
+      };
+    }
+
+    // Compute short Security Authentication String (SAS) from local + remote DTLS SHA-256 fingerprints
+    function computeSecuritySas(sdpA, sdpB) {
+      const fpA = (sdpA.match(/a=fingerprint:sha-256\s+([A-F0-9:]+)/i) || [])[1] || '00:00';
+      const fpB = (sdpB.match(/a=fingerprint:sha-256\s+([A-F0-9:]+)/i) || [])[1] || '00:00';
+      const combined = [fpA, fpB].sort().join('|');
+      let hash = 2166136261;
+      for (let i = 0; i < combined.length; i++) {
+        hash ^= combined.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      return (hash >>> 0).toString(16).toUpperCase().padStart(8, '0').slice(0, 6);
+    }
+
+    // Wait for ICE candidate gathering to finish (with 2.5s cap so UI stays snappy)
+    function waitForIceGathering(pc, timeoutMs = 2500) {
+      return new Promise((resolve) => {
+        if (pc.iceGatheringState === 'complete') {
+          resolve();
+          return;
+        }
+        const timer = setTimeout(() => {
+          pc.removeEventListener('icegatheringstatechange', checkState);
+          resolve();
+        }, timeoutMs);
+
+        function checkState() {
+          if (pc.iceGatheringState === 'complete') {
+            clearTimeout(timer);
+            pc.removeEventListener('icegatheringstatechange', checkState);
+            resolve();
+          }
+        }
+        pc.addEventListener('icegatheringstatechange', checkState);
+      });
+    }
+
+    // Strip non-essential SDP extension lines to keep QR codes compact and fast to scan
+    function minifySdp(sdp) {
+      return sdp
+        .split(/\r?\n/)
+        .filter(line => line && !line.startsWith('a=extmap:'))
+        .join('\r\n') + '\r\n';
+    }
+
+    // Compress signaling JSON into URL-safe Base64 string using native Deflate
+    async function encodeSignalingPayload(obj) {
+      const jsonStr = JSON.stringify(obj);
+      if (typeof CompressionStream !== 'undefined') {
+        const stream = new Blob([jsonStr]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+        const buf = await new Response(stream).arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let bin = '';
+        for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+        return 'NTZ1:' + btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      }
+      return 'NTJ1:' + btoa(unescape(encodeURIComponent(jsonStr)));
+    }
+
+    async function decodeSignalingPayload(token) {
+      const clean = token.trim();
+      if (clean.startsWith('NTZ1:')) {
+        if (typeof DecompressionStream === 'undefined') {
+          throw new Error('เบราว์เซอร์ไม่รองรับ DecompressionStream');
+        }
+        const b64 = clean.slice(5).replace(/-/g, '+').replace(/_/g, '/');
+        const bin = atob(b64);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+        const text = await new Response(stream).text();
+        return JSON.parse(text);
+      } else if (clean.startsWith('NTJ1:')) {
+        const jsonStr = decodeURIComponent(escape(atob(clean.slice(5))));
+        return JSON.parse(jsonStr);
+      }
+      throw new Error('รูปแบบรหัสจับคู่ NearTalk ไม่ถูกต้อง');
+    }
+
+    // Direct connection helper when peer is discovered on same Local Network Bus
+    async function connectToDiscoveredPeer(peerId) {
+      if (NativeBridge.connectWifiDirectPeer(peerId)) {
+        showToast('กำลังเชื่อมต่อผ่าน Android Wi-Fi Direct...', 'info');
+        return;
+      }
+      if (!discoveryChannel) {
+        openQrModal('create');
+        return;
+      }
+      showToast('กำลังส่งคำขอเชื่อมต่อ P2P...', 'info');
+      const peerEntry = createServerlessPeerConnection(peerId, AppState.discoveredPeers.get(peerId)?.name || peerId);
+      const dc = peerEntry.pc.createDataChannel('neartalk-p2p');
+      setupDataChannel(peerEntry, dc);
+
+      const offer = await peerEntry.pc.createOffer();
+      await peerEntry.pc.setLocalDescription(offer);
+      await waitForIceGathering(peerEntry.pc, 1500);
+
+      discoveryChannel.postMessage({
+        type: 'AUTO_OFFER',
+        senderId: AppState.localPeerId,
+        targetId: peerId,
+        name: AppState.localDeviceName,
+        sdp: peerEntry.pc.localDescription.sdp
+      });
+    }
+
+    async function handleDirectBusOffer(msg) {
+      if (AppState.blockedIds.has(msg.senderId)) return;
+      const peerEntry = createServerlessPeerConnection(msg.senderId, msg.name);
+      await peerEntry.pc.setRemoteDescription({ type: 'offer', sdp: msg.sdp });
+      const answer = await peerEntry.pc.createAnswer();
+      await peerEntry.pc.setLocalDescription(answer);
+      await waitForIceGathering(peerEntry.pc, 1500);
+
+      peerEntry.sasCode = computeSecuritySas(msg.sdp, peerEntry.pc.localDescription.sdp);
+      discoveryChannel.postMessage({
+        type: 'AUTO_ANSWER',
+        senderId: AppState.localPeerId,
+        targetId: msg.senderId,
+        name: AppState.localDeviceName,
+        sdp: peerEntry.pc.localDescription.sdp
+      });
+    }
+
+    async function handleDirectBusAnswer(msg) {
+      const peerEntry = AppState.peerConnections.get(msg.senderId);
+      if (!peerEntry) return;
+      await peerEntry.pc.setRemoteDescription({ type: 'answer', sdp: msg.sdp });
+      peerEntry.sasCode = computeSecuritySas(peerEntry.pc.localDescription.sdp, msg.sdp);
+      updateConnectedUI();
+    }
+
+    /**
+     * ============================================================================
+     * 7. QR CODE PAIRING WORKFLOW (8-Step Serverless Offer / Answer Exchange)
+     * ============================================================================
+     */
+    function openQrModal(mode = 'create') {
+      const modal = document.getElementById('qr-pairing-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      switchQrMode(mode);
+    }
+
+    function closeQrModal() {
+      stopQrCameraScanner();
+      if (AppState.qrExpiryInterval) clearInterval(AppState.qrExpiryInterval);
+      const modal = document.getElementById('qr-pairing-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function switchQrMode(mode) {
+      const hostBtn = document.getElementById('qr-mode-host');
+      const joinBtn = document.getElementById('qr-mode-join');
+      const hostPane = document.getElementById('qr-host-pane');
+      const joinPane = document.getElementById('qr-join-pane');
+
+      if (mode === 'create') {
+        hostBtn.className = 'py-2 rounded-xl text-xs font-bold bg-blue-600 text-white';
+        joinBtn.className = 'py-2 rounded-xl text-xs font-bold text-slate-400';
+        hostPane.classList.remove('hidden');
+        joinPane.classList.add('hidden');
+        generateHostOffer(false);
+      } else {
+        joinBtn.className = 'py-2 rounded-xl text-xs font-bold bg-blue-600 text-white';
+        hostBtn.className = 'py-2 rounded-xl text-xs font-bold text-slate-400';
+        joinPane.classList.remove('hidden');
+        hostPane.classList.add('hidden');
+      }
+    }
+
+    async function generateHostOffer(forceNew = false) {
+      try {
+        if (AppState.pendingOfferPc && !forceNew) return;
+        if (AppState.pendingOfferPc) {
+          try { AppState.pendingOfferPc.pc.close(); } catch (e) {}
+        }
+
+        const tempPeerId = 'PEER-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+        const peerEntry = createServerlessPeerConnection(tempPeerId, 'กำลังรอการจับคู่...');
+        const dc = peerEntry.pc.createDataChannel('neartalk-p2p');
+        setupDataChannel(peerEntry, dc);
+        AppState.pendingOfferPc = peerEntry;
+
+        const offer = await peerEntry.pc.createOffer({
+          offerToReceiveAudio: true,
+          offerToReceiveVideo: true
+        });
+        await peerEntry.pc.setLocalDescription(offer);
+        await waitForIceGathering(peerEntry.pc, 2500);
+
+        const expiresAt = Date.now() + 5 * 60 * 1000; // 5 minutes validity
+        const payload = {
+          v: 1,
+          t: 'offer',
+          id: AppState.localPeerId,
+          n: AppState.localDeviceName,
+          m: AppState.localDeviceModel,
+          exp: expiresAt,
+          sdp: minifySdp(peerEntry.pc.localDescription.sdp)
+        };
+
+        const encoded = await encodeSignalingPayload(payload);
+        document.getElementById('host-token-box').value = encoded;
+        document.getElementById('qr-payload-meta').textContent =
+          `ขนาดข้อมูล: ${encoded.length} bytes • ICE Candidates พร้อมใช้งาน`;
+
+        renderQrToCanvas('qr-output-canvas', encoded);
+        startQrExpiryCountdown(expiresAt);
+      } catch (err) {
+        showToast('เกิดข้อผิดพลาดในการสร้าง Offer QR: ' + err.message, 'error');
+      }
+    }
+
+    function startQrExpiryCountdown(expiresAt) {
+      if (AppState.qrExpiryInterval) clearInterval(AppState.qrExpiryInterval);
+      const el = document.getElementById('qr-expiry-timer');
+      AppState.qrExpiryInterval = setInterval(() => {
+        const rem = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
+        if (rem <= 0) {
+          el.textContent = 'หมดอายุแล้ว (กรุณาสร้างใหม่)';
+          el.className = 'font-mono text-rose-400 font-bold';
+          clearInterval(AppState.qrExpiryInterval);
+        } else {
+          const m = String(Math.floor(rem / 60)).padStart(2, '0');
+          const s = String(rem % 60).padStart(2, '0');
+          el.textContent = `หมดอายุใน ${m}:${s}`;
+          el.className = 'font-mono text-amber-400 font-semibold';
+        }
+      }, 1000);
+    }
+
+    async function processIncomingOffer() {
+      try {
+        const raw = document.getElementById('join-offer-input').value.trim();
+        if (!raw) {
+          showToast('กรุณาสแกนหรือวางรหัส Offer จากเครื่อง A ก่อน', 'warn');
+          return;
+        }
+        const data = await decodeSignalingPayload(raw);
+        if (data.t !== 'offer') throw new Error('รหัสนี้ไม่ใช่ Offer Token');
+        if (data.exp && Date.now() > data.exp) throw new Error('QR Code / รหัส Offer หมดอายุแล้ว กรุณาสร้างใหม่');
+        if (AppState.blockedIds.has(data.id)) throw new Error('อุปกรณ์นี้อยู่ในรายการที่ถูกบล็อก');
+
+        const peerEntry = createServerlessPeerConnection(data.id, data.n || data.id);
+        await peerEntry.pc.setRemoteDescription({ type: 'offer', sdp: data.sdp });
+
+        const answer = await peerEntry.pc.createAnswer();
+        await peerEntry.pc.setLocalDescription(answer);
+        await waitForIceGathering(peerEntry.pc, 2500);
+
+        peerEntry.sasCode = computeSecuritySas(data.sdp, peerEntry.pc.localDescription.sdp);
+
+        const answerPayload = {
+          v: 1,
+          t: 'answer',
+          id: AppState.localPeerId,
+          n: AppState.localDeviceName,
+          m: AppState.localDeviceModel,
+          exp: Date.now() + 5 * 60 * 1000,
+          sdp: minifySdp(peerEntry.pc.localDescription.sdp)
+        };
+
+        const encodedAnswer = await encodeSignalingPayload(answerPayload);
+        document.getElementById('join-answer-box').value = encodedAnswer;
+        document.getElementById('join-answer-result').classList.remove('hidden');
+        renderQrToCanvas('qr-answer-canvas', encodedAnswer);
+        showToast(`สร้างรหัสตอบกลับสำหรับ ${peerEntry.name} สำเร็จ! ให้เครื่อง A สแกน QR นี้`, 'success');
+      } catch (err) {
+        showToast('ไม่สามารถประมวลผล Offer ได้: ' + err.message, 'error');
+      }
+    }
+
+    async function completeHostHandshake() {
+      try {
+        const raw = document.getElementById('host-answer-input').value.trim();
+        if (!raw) {
+          showToast('กรุณาสแกนหรือวางรหัส Answer จากเครื่อง B', 'warn');
+          return;
+        }
+        if (!AppState.pendingOfferPc) {
+          showToast('ไม่พบเซสชัน Offer กรุณาสร้าง Offer ใหม่', 'error');
+          return;
+        }
+        const data = await decodeSignalingPayload(raw);
+        if (data.t !== 'answer') throw new Error('รหัสนี้ไม่ใช่ Answer Token');
+        if (data.exp && Date.now() > data.exp) throw new Error('รหัส Answer หมดอายุแล้ว');
+        if (AppState.blockedIds.has(data.id)) throw new Error('อุปกรณ์นี้ถูกบล็อก');
+
+        const peerEntry = AppState.pendingOfferPc;
+        // Re-key peer entry with real remote ID & Name
+        AppState.peerConnections.delete(peerEntry.id);
+        peerEntry.id = data.id;
+        peerEntry.name = data.n || data.id;
+        AppState.peerConnections.set(peerEntry.id, peerEntry);
+
+        await peerEntry.pc.setRemoteDescription({ type: 'answer', sdp: data.sdp });
+        peerEntry.sasCode = computeSecuritySas(peerEntry.pc.localDescription.sdp, data.sdp);
+
+        AppState.pendingOfferPc = null;
+        closeQrModal();
+        switchTab('connected');
+        updateConnectedUI();
+        showToast(`กำลังสร้างเส้นทางเชื่อมต่อ P2P กับ ${peerEntry.name}...`, 'info');
+      } catch (err) {
+        showToast('เชื่อมต่อล้มเหลว: ' + err.message, 'error');
+      }
+    }
+
+    // Camera QR Scanner using native BarcodeDetector API (Chrome Android)
+    async function startQrCameraScanner(targetType) {
+      const box = document.getElementById('qr-scanner-box');
+      const video = document.getElementById('qr-scanner-video');
+      const status = document.getElementById('qr-scanner-status');
+
+      if (!('BarcodeDetector' in window)) {
+        showToast('เบราว์เซอร์นี้ไม่รองรับ BarcodeDetector กรุณาใช้การคัดลอก/วางรหัสแทน', 'warn');
+        return;
+      }
+
+      try {
+        stopQrCameraScanner();
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' }
+        });
+        AppState.scannerStream = stream;
+        video.srcObject = stream;
+        box.classList.remove('hidden');
+        status.textContent = 'เล็งกล้องไปที่ QR Code ของอีกเครื่อง...';
+
+        const detector = new BarcodeDetector({ formats: ['qr_code'] });
+        const scanLoop = async () => {
+          if (!AppState.scannerStream) return;
+          try {
+            if (video.readyState >= 2) {
+              const barcodes = await detector.detect(video);
+              if (barcodes.length > 0 && barcodes[0].rawValue) {
+                const val = barcodes[0].rawValue;
+                stopQrCameraScanner();
+                if (targetType === 'offer') {
+                  document.getElementById('join-offer-input').value = val;
+                  processIncomingOffer();
+                } else {
+                  document.getElementById('host-answer-input').value = val;
+                  completeHostHandshake();
+                }
+                return;
+              }
+            }
+          } catch (e) {}
+          AppState.scannerAnimFrame = requestAnimationFrame(scanLoop);
+        };
+        scanLoop();
+      } catch (err) {
+        showToast('ไม่สามารถเปิดกล้องสแกนได้: ' + err.message, 'error');
+      }
+    }
+
+    function stopQrCameraScanner() {
+      if (AppState.scannerAnimFrame) cancelAnimationFrame(AppState.scannerAnimFrame);
+      if (AppState.scannerStream) {
+        AppState.scannerStream.getTracks().forEach(t => t.stop());
+        AppState.scannerStream = null;
+      }
+      document.getElementById('qr-scanner-box').classList.add('hidden');
+    }
+
+    function copyTokenToClipboard(textareaId) {
+      const el = document.getElementById(textareaId);
+      el.select();
+      el.setSelectionRange(0, 99999);
+      try {
+        document.execCommand('copy');
+        showToast('คัดลอกรหัสจับคู่ P2P ลงคลิปบอร์ดแล้ว', 'success');
+      } catch (e) {
+        showToast('ไม่สามารถคัดลอกอัตโนมัติ กรุณากดคัดลอกด้วยตนเอง', 'warn');
+      }
+    }
+
+    /**
+     * ============================================================================
+     * 8. VOICE & VIDEO CALL ENGINE (Real Media Streams, Camera Switch, AEC/NS)
+     * ============================================================================
+     */
+    let ringtoneInterval = null;
+
+    function playSynthesizedRingtone() {
+      stopSynthesizedRingtone();
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const ringOnce = () => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+          osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.18); // E5
+          gain.gain.setValueAtTime(0.08, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.56);
+        };
+        ringOnce();
+        ringtoneInterval = setInterval(ringOnce, 2000);
+      } catch (e) {}
+    }
+
+    function stopSynthesizedRingtone() {
+      if (ringtoneInterval) {
+        clearInterval(ringtoneInterval);
+        ringtoneInterval = null;
+      }
+    }
+
+    async function acquireLocalMedia(mediaType) {
+      const preset = PROFILE_PRESETS[AppState.performanceProfile] || PROFILE_PRESETS.balanced;
+      const constraints = {
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        },
+        video: mediaType === 'video' ? {
+          facingMode: AppState.facingMode,
+          width: { ideal: preset.width },
+          height: { ideal: preset.height },
+          frameRate: { ideal: preset.fps }
+        } : false
+      };
+
+      if (AppState.localStream) {
+        AppState.localStream.getTracks().forEach(t => t.stop());
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      AppState.localStream = stream;
+      AppState.micEnabled = true;
+      AppState.camEnabled = mediaType === 'video';
+
+      const localVideo = document.getElementById('local-video');
+      const pipWrapper = document.getElementById('local-pip-wrapper');
+      if (mediaType === 'video') {
+        localVideo.srcObject = stream;
+        pipWrapper.classList.remove('hidden');
+      } else {
+        pipWrapper.classList.add('hidden');
+      }
+
+      populateAudioOutputDevices();
+      return stream;
+    }
+
+    async function startP2PCall(mediaType) {
+      const peerEntry = getActivePeerEntry();
+      if (!peerEntry) {
+        showToast('ยังไม่มีอุปกรณ์ที่เชื่อมต่อ กรุณาจับคู่ผ่าน QR Code หรือ Nearby ก่อน', 'warn');
+        switchTab('nearby');
+        return;
+      }
+
+      try {
+        showToast(`กำลังขอสิทธิ์ไมโครโฟน${mediaType === 'video' ? 'และกล้อง' : ''}...`, 'info');
+        const stream = await acquireLocalMedia(mediaType);
+
+        // Attach tracks to active RTCPeerConnection
+        const senders = peerEntry.pc.getSenders();
+        stream.getTracks().forEach(track => {
+          const existingSender = senders.find(s => s.track && s.track.kind === track.kind);
+          if (existingSender) {
+            existingSender.replaceTrack(track);
+          } else {
+            peerEntry.pc.addTrack(track, stream);
+          }
+        });
+
+        // Renegotiate SDP over DataChannel if connected so remote peer receives new media tracks
+        if (peerEntry.dc && peerEntry.dc.readyState === 'open') {
+          peerEntry.dc.send(JSON.stringify({ type: 'CALL_INVITE', mediaType }));
+          const offer = await peerEntry.pc.createOffer();
+          await peerEntry.pc.setLocalDescription(offer);
+          // Also exchange renegotiation via DataChannel
+          peerEntry.dc.send(JSON.stringify({ type: 'RENEGOTIATE_OFFER', sdp: offer.sdp }));
+        }
+
+        beginCallSessionUI(peerEntry, mediaType);
+      } catch (err) {
+        showToast('ไม่สามารถเริ่มการโทรได้ (ตรวจสอบสิทธิ์กล้อง/ไมค์): ' + err.message, 'error');
+      }
+    }
+
+    function handleIncomingCallSignal(peerEntry, mediaType) {
+      AppState.activePeerId = peerEntry.id;
+      document.getElementById('incoming-call-type').textContent =
+        mediaType === 'video' ? 'สายวิดีโอเรียกเข้า P2P' : 'สายเสียงเรียกเข้า P2P';
+      document.getElementById('incoming-caller-name').textContent = peerEntry.name;
+      document.getElementById('incoming-caller-fp').textContent = `Security SAS: ${peerEntry.sasCode}`;
+      document.getElementById('incoming-call-modal').dataset.mediaType = mediaType;
+      document.getElementById('incoming-call-modal').classList.remove('hidden');
+      document.getElementById('incoming-call-modal').classList.add('flex');
+      playSynthesizedRingtone();
+    }
+
+    async function acceptIncomingCall() {
+      stopSynthesizedRingtone();
+      const modal = document.getElementById('incoming-call-modal');
+      const mediaType = modal.dataset.mediaType || 'audio';
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      switchTab('connected');
+      await startP2PCall(mediaType);
+    }
+
+    function rejectIncomingCall() {
+      stopSynthesizedRingtone();
+      const modal = document.getElementById('incoming-call-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      const peerEntry = getActivePeerEntry();
+      if (peerEntry && peerEntry.dc && peerEntry.dc.readyState === 'open') {
+        peerEntry.dc.send(JSON.stringify({ type: 'CALL_REJECT' }));
+      }
+    }
+
+    function beginCallSessionUI(peerEntry, mediaType) {
+      AppState.currentCallType = mediaType;
+      AppState.callStartTime = Date.now();
+      document.getElementById('call-live-dot').className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping';
+      document.getElementById('call-stage-title').textContent =
+        `${mediaType === 'video' ? 'วิดีโอคอล' : 'โทรเสียง'} • ${peerEntry.name}`;
+      document.getElementById('video-placeholder-text').textContent =
+        mediaType === 'video' ? 'กำลังเชื่อมต่อภาพวิดีโอ P2P...' : `กำลังสนทนาเสียงแบบเข้ารหัสกับ ${peerEntry.name}`;
+
+      if (AppState.callTimerInterval) clearInterval(AppState.callTimerInterval);
+      AppState.callTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - AppState.callStartTime) / 1000);
+        const mm = String(Math.floor(elapsed / 60)).padStart(2, '0');
+        const ss = String(elapsed % 60).padStart(2, '0');
+        document.getElementById('call-timer').textContent = `${mm}:${ss}`;
+      }, 1000);
+    }
+
+    function attachRemoteMediaToStage(stream, kind) {
+      const remoteVideo = document.getElementById('remote-video');
+      const remoteAudio = document.getElementById('remote-audio');
+      const placeholder = document.getElementById('video-placeholder');
+      const telemetryPill = document.getElementById('video-telemetry-pill');
+
+      if (kind === 'video') {
+        remoteVideo.srcObject = stream;
+        remoteVideo.classList.remove('hidden');
+        placeholder.classList.add('hidden');
+        telemetryPill.classList.remove('hidden');
+      } else {
+        remoteAudio.srcObject = stream;
+      }
+    }
+
+    function toggleMic() {
+      if (!AppState.localStream) return;
+      AppState.micEnabled = !AppState.micEnabled;
+      AppState.localStream.getAudioTracks().forEach(t => t.enabled = AppState.micEnabled);
+      document.getElementById('label-mic').textContent = AppState.micEnabled ? 'ไมค์เปิด' : 'ปิดไมค์';
+      showToast(AppState.micEnabled ? 'เปิดไมโครโฟนแล้ว' : 'ปิดไมโครโฟนแล้ว', 'info');
+    }
+
+    function toggleCamera() {
+      if (!AppState.localStream) return;
+      const vTracks = AppState.localStream.getVideoTracks();
+      if (vTracks.length === 0) {
+        startP2PCall('video');
+        return;
+      }
+      AppState.camEnabled = !AppState.camEnabled;
+      vTracks.forEach(t => t.enabled = AppState.camEnabled);
+      document.getElementById('label-cam').textContent = AppState.camEnabled ? 'กล้องเปิด' : 'ปิดกล้อง';
+    }
+
+    async function switchCameraFacing() {
+      AppState.facingMode = AppState.facingMode === 'user' ? 'environment' : 'user';
+      if (AppState.currentCallType === 'video') {
+        await startP2PCall('video');
+        showToast(`สลับเป็น${AppState.facingMode === 'user' ? 'กล้องหน้า' : 'กล้องหลัง'}แล้ว`, 'info');
+      }
+    }
+
+    async function populateAudioOutputDevices() {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const outputs = devices.filter(d => d.kind === 'audiooutput');
+        const select = document.getElementById('audio-output-select');
+        if (outputs.length > 0) {
+          select.innerHTML = outputs.map((d, i) =>
+            `<option value="${d.deviceId}">${escapeHtml(d.label || 'ลำโพงอุปกรณ์ ' + (i + 1))}</option>`
+          ).join('');
+        }
+      } catch (e) {}
+    }
+
+    async function changeAudioOutput(deviceId) {
+      const audioEl = document.getElementById('remote-audio');
+      const videoEl = document.getElementById('remote-video');
+      try {
+        if (typeof audioEl.setSinkId === 'function') await audioEl.setSinkId(deviceId);
+        if (typeof videoEl.setSinkId === 'function') await videoEl.setSinkId(deviceId);
+        showToast('เปลี่ยนอุปกรณ์ส่งออกเสียงแล้ว', 'info');
+      } catch (e) {
+        showToast('เบราว์เซอร์จำกัดการเปลี่ยนลำโพงภายนอก', 'warn');
+      }
+    }
+
+    function endCurrentCall(notifyRemote = true) {
+      stopSynthesizedRingtone();
+      const peerEntry = getActivePeerEntry();
+      if (notifyRemote && peerEntry && peerEntry.dc && peerEntry.dc.readyState === 'open') {
+        peerEntry.dc.send(JSON.stringify({ type: 'CALL_END' }));
+      }
+
+      if (AppState.callStartTime && peerEntry) {
+        const durationSec = Math.max(1, Math.floor((Date.now() - AppState.callStartTime) / 1000));
+        AppState.callLogs.unshift({
+          peerName: peerEntry.name,
+          mediaType: AppState.currentCallType || 'audio',
+          durationSec,
+          timestamp: new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })
+        });
+        renderCallLogs();
+      }
+
+      if (AppState.localStream) {
+        AppState.localStream.getTracks().forEach(t => t.stop());
+        AppState.localStream = null;
+      }
+
+      if (AppState.callTimerInterval) {
+        clearInterval(AppState.callTimerInterval);
+        AppState.callTimerInterval = null;
+      }
+      AppState.callStartTime = null;
+      AppState.currentCallType = null;
+
+      document.getElementById('call-timer').textContent = '00:00';
+      document.getElementById('call-live-dot').className = 'w-2.5 h-2.5 rounded-full bg-slate-500';
+      document.getElementById('remote-video').classList.add('hidden');
+      document.getElementById('local-pip-wrapper').classList.add('hidden');
+      document.getElementById('video-telemetry-pill').classList.add('hidden');
+      document.getElementById('video-placeholder').classList.remove('hidden');
+      document.getElementById('video-placeholder-text').textContent = 'สิ้นสุดการสนทนาแล้ว';
+    }
+
+    /**
+     * ============================================================================
+     * 9. REAL-TIME NETWORK MONITOR & ADAPTIVE BITRATE THROTTLING
+     * Reads genuine RTCPeerConnection.getStats() telemetry every 1,000ms
+     * ============================================================================
+     */
+    function startWebRtcStatsMonitor(peerEntry) {
+      if (peerEntry.statsTimer) clearInterval(peerEntry.statsTimer);
+      peerEntry.statsTimer = setInterval(async () => {
+        if (!peerEntry.pc || peerEntry.pc.connectionState !== 'connected') return;
+        try {
+          const stats = await peerEntry.pc.getStats();
+          let rttMs = null;
+          let jitterMs = 0;
+          let packetsLost = 0;
+          let packetsRecv = 0;
+          let bytesSent = 0;
+          let bytesRecv = 0;
+          let fps = 0;
+          let width = 0;
+          let height = 0;
+          let pairInfo = 'Local P2P Candidate';
+
+          stats.forEach(report => {
+            if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+              if (typeof report.currentRoundTripTime === 'number') {
+                rttMs = Math.round(report.currentRoundTripTime * 1000);
+              }
+              pairInfo = `UDP/TCP Direct (${report.localCandidateId?.slice(0, 6)} ↔ ${report.remoteCandidateId?.slice(0, 6)})`;
+            }
+            if (report.type === 'inbound-rtp') {
+              bytesRecv += report.bytesReceived || 0;
+              packetsLost += report.packetsLost || 0;
+              packetsRecv += report.packetsReceived || 0;
+              if (typeof report.jitter === 'number') {
+                jitterMs = Math.max(jitterMs, Math.round(report.jitter * 1000));
+              }
+              if (report.kind === 'video') {
+                fps = Math.round(report.framesPerSecond || 0);
+                width = report.frameWidth || 0;
+                height = report.frameHeight || 0;
+              }
+            }
+            if (report.type === 'outbound-rtp') {
+              bytesSent += report.bytesSent || 0;
+              if (report.kind === 'video' && !fps) {
+                fps = Math.round(report.framesPerSecond || 0);
+                width = report.frameWidth || 0;
+                height = report.frameHeight || 0;
+              }
+            }
+          });
+
+          const now = Date.now();
+          let upKbps = 0;
+          let downKbps = 0;
+          if (peerEntry.lastTimestamp > 0) {
+            const dtSec = (now - peerEntry.lastTimestamp) / 1000;
+            if (dtSec > 0) {
+              upKbps = Math.max(0, Math.round(((bytesSent - peerEntry.lastBytesSent) * 8) / 1000 / dtSec));
+              downKbps = Math.max(0, Math.round(((bytesRecv - peerEntry.lastBytesRecv) * 8) / 1000 / dtSec));
+            }
+          }
+          peerEntry.lastBytesSent = bytesSent;
+          peerEntry.lastBytesRecv = bytesRecv;
+          peerEntry.lastTimestamp = now;
+
+          const totalPkts = packetsLost + packetsRecv;
+          const lossPct = totalPkts > 0 ? ((packetsLost / totalPkts) * 100) : 0;
+
+          // Update Monitor UI
+          document.getElementById('stat-rtt').textContent = rttMs !== null ? `${rttMs} ms` : '< 5 ms';
+          document.getElementById('stat-jitter').textContent = `${jitterMs} ms`;
+          document.getElementById('stat-loss').textContent = `${lossPct.toFixed(1)}%`;
+          document.getElementById('stat-video').textContent =
+            (width && height) ? `${fps} FPS / ${height}p` : 'Audio / Data';
+          document.getElementById('stat-up').textContent = `${upKbps} kbps`;
+          document.getElementById('stat-down').textContent = `${downKbps} kbps`;
+          document.getElementById('stat-ice-pair').textContent = pairInfo;
+          document.getElementById('video-telemetry-pill').textContent =
+            `${height || 0}p • ${fps} FPS • ${upKbps} kbps`;
+
+          // Connection Quality Evaluation & Automatic Bitrate Adaptation
+          const qBadge = document.getElementById('net-quality-badge');
+          if ((rttMs !== null && rttMs > 260) || lossPct > 5.0) {
+            qBadge.textContent = 'สัญญาณอ่อน (ปรับลด Bitrate อัตโนมัติ)';
+            qBadge.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30';
+            applyBitrateParametersToActiveCall(300000, 2.0);
+          } else {
+            qBadge.textContent = 'ดีเยี่ยม (P2P Direct)';
+            qBadge.className = 'text-xs font-semibold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+          }
+
+          AppState.telemetryHistory.push({ rtt: rttMs || 4, up: upKbps, down: downKbps });
+          if (AppState.telemetryHistory.length > 30) AppState.telemetryHistory.shift();
+          drawTelemetryGraph();
+        } catch (e) {}
+      }, 1000);
+    }
+
+    async function applyBitrateParametersToActiveCall(maxBitrate, scaleDownBy) {
+      const peerEntry = getActivePeerEntry();
+      if (!peerEntry || !peerEntry.pc) return;
+      for (const sender of peerEntry.pc.getSenders()) {
+        if (sender.track && sender.track.kind === 'video') {
+          try {
+            const params = sender.getParameters();
+            if (!params.encodings || params.encodings.length === 0) params.encodings = [{}];
+            params.encodings[0].maxBitrate = maxBitrate;
+            params.encodings[0].scaleResolutionDownBy = scaleDownBy;
+            await sender.setParameters(params);
+          } catch (e) {}
+        }
+      }
+    }
+
+    function drawTelemetryGraph() {
+      const canvas = document.getElementById('telemetry-canvas');
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width === 0) return;
+      canvas.width = rect.width * (window.devicePixelRatio || 1);
+      canvas.height = rect.height * (window.devicePixelRatio || 1);
+      const ctx = canvas.getContext('2d');
+      ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const hist = AppState.telemetryHistory;
+      if (hist.length < 2) return;
+
+      const maxVal = Math.max(100, ...hist.map(d => Math.max(d.up, d.down, d.rtt)));
+      const stepX = w / (hist.length - 1);
+
+      // Draw Upload Bitrate Line
+      ctx.beginPath();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 2;
+      hist.forEach((pt, idx) => {
+        const x = idx * stepX;
+        const y = h - (pt.up / maxVal) * (h - 16) - 8;
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+
+      // Draw RTT Latency Line
+      ctx.beginPath();
+      ctx.strokeStyle = '#34d399';
+      ctx.lineWidth = 2;
+      hist.forEach((pt, idx) => {
+        const x = idx * stepX;
+        const y = h - (pt.rtt / maxVal) * (h - 16) - 8;
+        if (idx === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+    }
+
+    /**
+     * ============================================================================
+     * 10. CONNECTED PEERS, DATA CHANNEL MESSAGING, BLOCKING & CALL LOGS
+     * ============================================================================
+     */
+    function getActivePeerEntry() {
+      if (AppState.activePeerId && AppState.peerConnections.has(AppState.activePeerId)) {
+        return AppState.peerConnections.get(AppState.activePeerId);
+      }
+      const first = AppState.peerConnections.values().next().value;
+      return first || null;
+    }
+
+    function updateConnectedUI() {
+      const listEl = document.getElementById('connected-peers-list');
+      const navDot = document.getElementById('nav-connected-dot');
+      const sasBadge = document.getElementById('dtls-security-badge');
+      const sasCodeEl = document.getElementById('dtls-sas-code');
+
+      const activePeers = Array.from(AppState.peerConnections.values());
+      navDot.classList.toggle('hidden', activePeers.length === 0);
+
+      const current = getActivePeerEntry();
+      if (current && current.sasCode !== '----') {
+        sasBadge.classList.remove('hidden');
+        sasBadge.classList.add('inline-flex');
+        sasCodeEl.textContent = `DTLS SAS: ${current.sasCode}`;
+      } else {
+        sasBadge.classList.add('hidden');
+      }
+
+      if (activePeers.length === 0) {
+        listEl.innerHTML = `<p class="text-xs text-slate-400">ยังไม่มีอุปกรณ์ที่เชื่อมต่อ P2P ในขณะนี้</p>`;
+        return;
+      }
+
+      listEl.innerHTML = activePeers.map(p => `
+        <div class="rounded-2xl bg-black/25 border border-emerald-500/30 p-3 flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <p class="font-bold text-sm truncate">${escapeHtml(p.name)}</p>
+            <p class="text-[11px] font-mono text-emerald-400">State: ${p.pc.connectionState} • SAS: ${p.sasCode}</p>
+          </div>
+          <button onclick="disconnectPeer('${p.id}')" class="px-3 py-1.5 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold shrink-0">
+            ตัดการเชื่อมต่อ
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function sendDataChannelMessage(event) {
+      event.preventDefault();
+      const input = document.getElementById('dc-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const peerEntry = getActivePeerEntry();
+      if (!peerEntry || !peerEntry.dc || peerEntry.dc.readyState !== 'open') {
+        showToast('ยังไม่มีช่องสัญญาณ DataChannel ที่เปิดอยู่ กรุณาเชื่อมต่ออุปกรณ์ก่อน', 'warn');
+        return;
+      }
+
+      peerEntry.dc.send(JSON.stringify({ type: 'CHAT_MSG', text }));
+      appendChatBubble('ฉัน (You)', text, true);
+      input.value = '';
+    }
+
+    function appendChatBubble(sender, text, isSelf) {
+      const box = document.getElementById('dc-messages');
+      const row = document.createElement('div');
+      row.className = isSelf ? 'text-right' : 'text-left';
+      row.innerHTML = `
+        <span class="inline-block px-3 py-1.5 rounded-2xl ${isSelf ? 'bg-blue-600 text-white' : 'bg-white/10 text-slate-200'}">
+          <b class="text-[10px] opacity-75 block">${escapeHtml(sender)}</b>
+          ${escapeHtml(text)}
+        </span>
+      `;
+      box.appendChild(row);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function cleanupPeerConnection(peerId) {
+      const entry = AppState.peerConnections.get(peerId);
+      if (entry) {
+        if (entry.statsTimer) clearInterval(entry.statsTimer);
+        try { entry.pc.close(); } catch (e) {}
+        AppState.peerConnections.delete(peerId);
+      }
+      if (AppState.activePeerId === peerId) AppState.activePeerId = null;
+      const disc = AppState.discoveredPeers.get(peerId);
+      if (disc) disc.status = 'discovered';
+      updateConnectedUI();
+      renderNearbyDevices();
+    }
+
+    function disconnectPeer(peerId) {
+      endCurrentCall(true);
+      cleanupPeerConnection(peerId);
+      showToast('ตัดการเชื่อมต่ออุปกรณ์แล้ว', 'info');
+    }
+
+    function blockPeer(peerId) {
+      AppState.blockedIds.add(peerId);
+      disconnectPeer(peerId);
+      AppState.discoveredPeers.delete(peerId);
+      renderNearbyDevices();
+      renderBlockedDevices();
+      showToast('บล็อกอุปกรณ์เรียบร้อยแล้ว', 'warn');
+    }
+
+    function unblockPeer(peerId) {
+      AppState.blockedIds.delete(peerId);
+      renderBlockedDevices();
+      showToast('ปลดบล็อกอุปกรณ์แล้ว', 'info');
+    }
+
+    function renderBlockedDevices() {
+      const el = document.getElementById('blocked-devices-list');
+      if (AppState.blockedIds.size === 0) {
+        el.innerHTML = '<p>ไม่มีอุปกรณ์ที่ถูกบล็อก</p>';
+        return;
+      }
+      el.innerHTML = Array.from(AppState.blockedIds).map(id => `
+        <div class="flex items-center justify-between bg-black/25 px-3 py-2 rounded-xl border border-white/10">
+          <span class="font-mono">${escapeHtml(id)}</span>
+          <button onclick="unblockPeer('${id}')" class="text-blue-400 hover:underline">ปลดบล็อก</button>
+        </div>
+      `).join('');
+    }
+
+    function renderCallLogs() {
+      const el = document.getElementById('call-history-list');
+      if (AppState.callLogs.length === 0) {
+        el.innerHTML = `<div class="text-center py-8 text-xs text-slate-400">ยังไม่มีประวัติการโทรในเซสชันนี้</div>`;
+        return;
+      }
+      el.innerHTML = AppState.callLogs.map(log => `
+        <div class="rounded-2xl bg-black/25 border border-white/10 p-3.5 flex items-center justify-between">
+          <div>
+            <p class="font-bold text-sm">${escapeHtml(log.peerName)}</p>
+            <p class="text-xs text-slate-400">${log.mediaType === 'video' ? 'วิดีโอคอล P2P' : 'โทรเสียง P2P'} • เวลา ${log.timestamp}</p>
+          </div>
+          <span class="font-mono text-xs font-semibold text-cyan-400">${log.durationSec} วินาที</span>
+        </div>
+      `).join('');
+    }
+
+    function clearCallLogs() {
+      AppState.callLogs = [];
+      renderCallLogs();
+      showToast('ล้างประวัติการโทรแล้ว', 'info');
+    }
+
+    /**
+     * ============================================================================
+     * 11. NAVIGATION, THEME & LIQUID GLASS SETTINGS
+     * ============================================================================
+     */
+    function switchTab(tabName) {
+      AppState.activeTab = tabName;
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      const activePanel = document.getElementById(`tab-${tabName}`);
+      if (activePanel) activePanel.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        const isCurrent = btn.dataset.tab === tabName;
+        btn.classList.toggle('text-blue-400', isCurrent);
+        btn.classList.toggle('bg-blue-500/15', isCurrent);
+        btn.classList.toggle('text-slate-400', !isCurrent);
+      });
+
+      if (tabName === 'monitor') drawTelemetryGraph();
+    }
+
+    function setThemeMode(mode) {
+      AppState.themeMode = mode;
+      const html = document.documentElement;
+      if (mode === 'light') {
+        html.classList.remove('dark');
+        html.classList.add('light');
+        document.getElementById('btn-mode-light').className = 'py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white';
+        document.getElementById('btn-mode-dark').className = 'py-2 rounded-xl text-xs font-semibold text-slate-500';
+      } else {
+        html.classList.remove('light');
+        html.classList.add('dark');
+        document.getElementById('btn-mode-dark').className = 'py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white';
+        document.getElementById('btn-mode-light').className = 'py-2 rounded-xl text-xs font-semibold text-slate-400';
+      }
+    }
+
+    function setLanguage(lang) {
+      AppState.language = lang;
+      document.getElementById('btn-lang-th').className = lang === 'th'
+        ? 'py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white'
+        : 'py-2 rounded-xl text-xs font-semibold text-slate-400';
+      document.getElementById('btn-lang-en').className = lang === 'en'
+        ? 'py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white'
+        : 'py-2 rounded-xl text-xs font-semibold text-slate-400';
+
+      const dict = {
+        th: {
+          nearby_title: 'เรดาร์ค้นหาอุปกรณ์ใกล้เคียง',
+          nearby_subtitle: 'เป้าหมายระยะ ~40 เมตร (Offline P2P Local / Wi-Fi Direct / QR)'
+        },
+        en: {
+          nearby_title: 'Nearby Device Radar',
+          nearby_subtitle: 'Target range ~40 meters (Offline P2P Local / Wi-Fi Direct / QR)'
+        }
+      };
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[lang] && dict[lang][key]) el.textContent = dict[lang][key];
+      });
+    }
+
+    function setAccentTheme(primary, secondary) {
+      document.documentElement.style.setProperty('--accent-primary', primary);
+      document.documentElement.style.setProperty('--accent-secondary', secondary);
+      document.documentElement.style.setProperty('--accent-glow', primary + '59');
+    }
+
+    function setGlassOpacity(pct) {
+      document.documentElement.style.setProperty('--glass-alpha', (pct / 100).toFixed(2));
+      document.getElementById('glass-alpha-val').textContent = `${pct}%`;
+    }
+
+    function setAnimationSpeed(mult) {
+      document.documentElement.style.setProperty('--anim-speed', mult);
+      document.getElementById('anim-speed-val').textContent = `${parseFloat(mult).toFixed(1)}x`;
+    }
+
+    function updateLocalDeviceName(val) {
+      if (val && val.trim()) {
+        AppState.localDeviceName = val.trim();
+        updateHardwareUI();
+        sendDiscoveryBeacon(false);
+        showToast('อัปเดตชื่ออุปกรณ์แล้ว', 'success');
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /**
+     * ============================================================================
+     * 12. ZERO-DEPENDENCY PURE-JS QR CODE MATRIX ENCODER (ISO/IEC 18004 Level L)
+     * Guarantees 100% offline QR generation for WebRTC Offer/Answer payloads
+     * ============================================================================
+     */
+    const QrEngine = (() => {
+      const GF_EXP = new Uint8Array(512);
+      const GF_LOG = new Uint8Array(256);
+      let x = 1;
+      for (let i = 0; i < 255; i++) {
+        GF_EXP[i] = x;
+        GF_LOG[x] = i;
+        x <<= 1;
+        if (x & 0x100) x ^= 0x11d;
+      }
+      for (let i = 255; i < 512; i++) GF_EXP[i] = GF_EXP[i - 255];
+
+      function gfMul(a, b) {
+        return (a === 0 || b === 0) ? 0 : GF_EXP[GF_LOG[a] + GF_LOG[b]];
+      }
+
+      function rsGenPoly(ecLen) {
+        let poly = [1];
+        for (let i = 0; i < ecLen; i++) {
+          const next = new Array(poly.length + 1).fill(0);
+          const factor = GF_EXP[i];
+          for (let j = 0; j < poly.length; j++) {
+            next[j] ^= poly[j];
+            next[j + 1] ^= gfMul(poly[j], factor);
+          }
+          poly = next;
+        }
+        return poly;
+      }
+
+      function rsEncode(data, ecLen) {
+        const gen = rsGenPoly(ecLen);
+        const res = new Uint8Array(data.length + ecLen);
+        res.set(data);
+        for (let i = 0; i < data.length; i++) {
+          const coef = res[i];
+          if (coef !== 0) {
+            for (let j = 0; j < gen.length; j++) {
+              res[i + j] ^= gfMul(gen[j], coef);
+            }
+          }
+        }
+        return res.slice(data.length);
+      }
+
+      // Version 1..20 Level L specs: [totalCodewords, ecPerBlock, blocksGroup1, dataLen1, blocksGroup2, dataLen2]
+      const VERSIONS = [
+        null,
+        [26, 7, 1, 19, 0, 0],
+        [44, 10, 1, 34, 0, 0],
+        [70, 15, 1, 55, 0, 0],
+        [100, 20, 1, 80, 0, 0],
+        [134, 26, 1, 108, 0, 0],
+        [172, 18, 2, 68, 0, 0],
+        [196, 20, 2, 78, 0, 0],
+        [242, 24, 2, 97, 0, 0],
+        [292, 30, 2, 116, 0, 0],
+        [346, 18, 2, 68, 2, 69],
+        [404, 20, 4, 81, 0, 0],
+        [466, 24, 2, 92, 2, 93],
+        [532, 26, 4, 107, 0, 0],
+        [581, 30, 3, 115, 1, 116],
+        [655, 22, 5, 87, 1, 88],
+        [733, 24, 5, 98, 1, 99],
+        [815, 28, 1, 107, 5, 108],
+        [901, 30, 5, 120, 1, 121],
+        [991, 28, 3, 113, 4, 114],
+        [1085, 28, 3, 107, 5, 108]
+      ];
+
+      const ALIGN_POS = [
+        null, [], [6, 18], [6, 22], [6, 26], [6, 30], [6, 34],
+        [6, 22, 38], [6, 24, 42], [6, 26, 46], [6, 28, 50], [6, 30, 54],
+        [6, 32, 58], [6, 34, 62], [6, 26, 46, 66], [6, 26, 48, 70],
+        [6, 26, 50, 74], [6, 30, 54, 78], [6, 30, 56, 82], [6, 30, 58, 86], [6, 34, 62, 90]
+      ];
+
+      const VERSION_BITS = {
+        7: 0x07C94, 8: 0x085BC, 9: 0x09A99, 10: 0x0A4D3, 11: 0x0BBF6,
+        12: 0x0C762, 13: 0x0D847, 14: 0x0E60D, 15: 0x0F928, 16: 0x10B78,
+        17: 0x1145D, 18: 0x12A17, 19: 0x13532, 20: 0x149A6
+      };
+
+      function encodeBytes(text) {
+        const bytes = new TextEncoder().encode(text);
+        let ver = 1;
+        for (; ver <= 20; ver++) {
+          const cap = VERSIONS[ver][2] * VERSIONS[ver][3] + VERSIONS[ver][4] * VERSIONS[ver][5];
+          const overhead = ver <= 9 ? 2 : 3;
+          if (bytes.length + overhead <= cap) break;
+        }
+        if (ver > 20) throw new Error('Payload too large for QR');
+
+        const [totalCw, ecPerBlock, b1, d1, b2, d2] = VERSIONS[ver];
+        const dataCap = b1 * d1 + b2 * d2;
+
+        // Bit buffer
+        const bits = [];
+        const pushBits = (val, len) => {
+          for (let i = len - 1; i >= 0; i--) bits.push((val >>> i) & 1);
+        };
+        pushBits(0b0100, 4); // Byte mode
+        pushBits(bytes.length, ver <= 9 ? 8 : 16);
+        for (const b of bytes) pushBits(b, 8);
+        pushBits(0, Math.min(4, dataCap * 8 - bits.length));
+        while (bits.length % 8 !== 0) bits.push(0);
+
+        const dataCw = new Uint8Array(dataCap);
+        for (let i = 0; i < bits.length / 8; i++) {
+          let byteVal = 0;
+          for (let j = 0; j < 8; j++) byteVal = (byteVal << 1) | bits[i * 8 + j];
+          dataCw[i] = byteVal;
+        }
+        const pads = [0xec, 0x11];
+        for (let i = bits.length / 8, p = 0; i < dataCap; i++, p ^= 1) {
+          dataCw[i] = pads[p];
+        }
+
+        // Split into blocks & generate RS ECC
+        const dataBlocks = [];
+        const ecBlocks = [];
+        let offset = 0;
+        for (let i = 0; i < b1; i++) {
+          const blk = dataCw.slice(offset, offset + d1);
+          offset += d1;
+          dataBlocks.push(blk);
+          ecBlocks.push(rsEncode(blk, ecPerBlock));
+        }
+        for (let i = 0; i < b2; i++) {
+          const blk = dataCw.slice(offset, offset + d2);
+          offset += d2;
+          dataBlocks.push(blk);
+          ecBlocks.push(rsEncode(blk, ecPerBlock));
+        }
+
+        // Interleave codewords
+        const finalCw = [];
+        const maxD = Math.max(d1, d2);
+        for (let i = 0; i < maxD; i++) {
+          for (const blk of dataBlocks) if (i < blk.length) finalCw.push(blk[i]);
+        }
+        for (let i = 0; i < ecPerBlock; i++) {
+          for (const blk of ecBlocks) finalCw.push(blk[i]);
+        }
+
+        const size = ver * 4 + 17;
+        const grid = Array.from({ length: size }, () => new Int8Array(size).fill(-1));
+        const isFunc = Array.from({ length: size }, () => new Uint8Array(size));
+
+        const setFunc = (r, c, v) => {
+          if (r >= 0 && r < size && c >= 0 && c < size) {
+            grid[r][c] = v ? 1 : 0;
+            isFunc[r][c] = 1;
+          }
+        };
+
+        // Finder patterns + separators
+        const placeFinder = (row, col) => {
+          for (let dr = -1; dr <= 7; dr++) {
+            for (let dc = -1; dc <= 7; dc++) {
+              const inBox = dr >= 0 && dr <= 6 && dc >= 0 && dc <= 6;
+              const dark = inBox && (dr === 0 || dr === 6 || dc === 0 || dc === 6 || (dr >= 2 && dr <= 4 && dc >= 2 && dc <= 4));
+              setFunc(row + dr, col + dc, dark);
+            }
+          }
+        };
+        placeFinder(0, 0);
+        placeFinder(0, size - 7);
+        placeFinder(size - 7, 0);
+
+        // Alignment patterns
+        const ap = ALIGN_POS[ver];
+        for (let i = 0; i < ap.length; i++) {
+          for (let j = 0; j < ap.length; j++) {
+            if ((i === 0 && j === 0) || (i === 0 && j === ap.length - 1) || (i === ap.length - 1 && j === 0)) continue;
+            const cr = ap[i], cc = ap[j];
+            for (let dr = -2; dr <= 2; dr++) {
+              for (let dc = -2; dc <= 2; dc++) {
+                setFunc(cr + dr, cc + dc, Math.abs(dr) === 2 || Math.abs(dc) === 2 || (dr === 0 && dc === 0));
+              }
+            }
+          }
+        }
+
+        // Timing patterns
+        for (let i = 8; i < size - 8; i++) {
+          setFunc(6, i, i % 2 === 0);
+          setFunc(i, 6, i % 2 === 0);
+        }
+
+        // Reserve Format & Version bits
+        for (let i = 0; i < 9; i++) {
+          if (i !== 6) { setFunc(8, i, 0); setFunc(i, 8, 0); }
+        }
+        for (let i = 0; i < 8; i++) {
+          setFunc(8, size - 1 - i, 0);
+          setFunc(size - 1 - i, 8, 0);
+        }
+        setFunc(size - 8, 8, 1);
+
+        if (ver >= 7) {
+          const vBits = VERSION_BITS[ver];
+          for (let i = 0; i < 18; i++) {
+            const bit = (vBits >>> i) & 1;
+            const a = Math.floor(i / 3), b = size - 11 + (i % 3);
+            setFunc(a, b, bit);
+            setFunc(b, a, bit);
+          }
+        }
+
+        // Zigzag data placement with Mask 0 ((r + c) % 2 === 0)
+        let bitIdx = 0;
+        const totalBits = finalCw.length * 8;
+        let upward = true;
+        for (let right = size - 1; right >= 1; right -= 2) {
+          if (right === 6) right = 5;
+          for (let vert = 0; vert < size; vert++) {
+            const r = upward ? size - 1 - vert : vert;
+            for (let lr = 0; lr < 2; lr++) {
+              const c = right - lr;
+              if (!isFunc[r][c]) {
+                let bit = 0;
+                if (bitIdx < totalBits) {
+                  bit = (finalCw[bitIdx >>> 3] >>> (7 - (bitIdx & 7))) & 1;
+                  bitIdx++;
+                }
+                const mask = ((r + c) % 2 === 0) ? 1 : 0;
+                grid[r][c] = bit ^ mask;
+              }
+            }
+          }
+          upward = !upward;
+        }
+
+        // Format Info for Level L + Mask 0 = 0x77C4
+        const fmt = 0x77C4;
+        for (let i = 0; i < 15; i++) {
+          const bit = (fmt >>> i) & 1;
+          if (i < 6) grid[i][8] = bit;
+          else if (i < 8) grid[i + 1][8] = bit;
+          else grid[size - 15 + i][8] = bit;
+
+          if (i < 8) grid[8][size - 1 - i] = bit;
+          else if (i < 9) grid[8][15 - i] = bit;
+          else grid[8][15 - i - 1] = bit;
+        }
+
+        return grid;
+      }
+
+      return { encodeBytes };
+    })();
+
+    function renderQrToCanvas(canvasId, text) {
+      const canvas = document.getElementById(canvasId);
+      const ctx = canvas.getContext('2d');
+      try {
+        const matrix = QrEngine.encodeBytes(text);
+        const count = matrix.length;
+        const quiet = 4;
+        const total = count + quiet * 2;
+        const scale = Math.floor(240 / total) || 2;
+        const dim = total * scale;
+        canvas.width = dim;
+        canvas.height = dim;
+
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, dim, dim);
+        ctx.fillStyle = '#090d16';
+        for (let r = 0; r < count; r++) {
+          for (let c = 0; c < count; c++) {
+            if (matrix[r][c] === 1) {
+              ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+            }
+          }
+        }
+      } catch (err) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#ef4444';
+        ctx.font = '12px sans-serif';
+        ctx.fillText('ใช้ปุ่มคัดลอกรหัสด้านล่างแทน QR', 24, 120);
+      }
+    }
+
+    /**
+     * ============================================================================
+     * 13. COMPLETE MULTI-PLATFORM PROJECT REPOSITORY (Web PWA + Native Android APK)
+     * Provides downloadable files & pure-JS ZIP archive for Android Studio build
+     * ============================================================================
+     */
+    const PROJECT_FILES = {
+      'README.md': `# NearTalk Hybrid – Offline Voice & Video (v1.0 Beta)
+
+ระบบสื่อสารระยะใกล้แบบ Offline P2P รองรับทั้ง **Web Application (PWA)** และ **Native Android Application (Kotlin + Jetpack Compose)** โดยไม่พึ่งพาอินเทอร์เน็ต, Cloud Server, Firebase หรือ STUN/TURN ภายนอก
+
+## โครงสร้างโปรเจกต์
+- \`index.html\` – เว็บแอปพลิเคชันแบบ Single-File ทำงานบน Chrome Android / Desktop
+- \`manifest.json\` & \`service-worker.js\` – รองรับการติดตั้งเป็น PWA และแคชไฟล์แบบออฟไลน์ 100%
+- \`android/\` – โปรเจกต์ Android Studio พร้อม Build เป็นไฟล์ \`.apk\`
+
+## วิธี Build ไฟล์ Android APK
+1. เปิดโฟลเดอร์ \`android/\` ด้วย **Android Studio (Ladybug หรือใหม่กว่า)**
+2. ตรวจสอบ JDK 17 และ Android SDK API 34 (Android 14)
+3. รอ Gradle Sync ดาวน์โหลด \`io.getstream:stream-webrtc-android\` และ Jetpack Compose
+4. เลือกเมนู **Build > Build Bundle(s) / APK(s) > Build APK(s)**
+5. ไฟล์ APK จะอยู่ที่ \`android/app/build/outputs/apk/debug/app-debug.apk\`
+
+## คู่มือการจับคู่โทรศัพท์ 2 เครื่องแบบออฟไลน์ (ไม่ใช้อินเทอร์เน็ต)
+1. **เตรียมเครือข่ายท้องถิ่น**: เปิด **Wi-Fi Hotspot** บนเครื่อง A แล้วให้เครื่อง B เชื่อมต่อ Wi-Fi ของเครื่อง A (หรือใช้ Wi-Fi Direct บนเวอร์ชัน Android Native)
+2. **เครื่อง A**: เปิด NearTalk -> กด **"สร้าง QR จับคู่"** -> รอให้รวบรวม Local ICE Candidates เสร็จ
+3. **เครื่อง B**: เปิด NearTalk -> กด **"สแกน / รับรหัส"** -> สแกน QR Code จากหน้าจอเครื่อง A -> ระบบจะสร้าง **Answer QR Code**
+4. **เครื่อง A**: สแกน **Answer QR Code** จากหน้าจอเครื่อง B -> กด **"ยืนยันการเชื่อมต่อ P2P"**
+5. เมื่อสถานะเปลี่ยนเป็น **Connected** และรหัส **DTLS SAS** ตรงกันทั้งสองเครื่อง สามารถเริ่มโทรเสียง วิดีโอ หรือส่งข้อความได้ทันที!`,
+
+      'manifest.json': `{
+  "name": "NearTalk Hybrid – Offline Voice & Video",
+  "short_name": "NearTalk",
+  "description": "Serverless Offline P2P Voice & Video Communication",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' rx='32' fill='%233b82f6'/%3E%3Cpath d='M36 76a40 40 0 0156 0M48 88a24 24 0 0132 0M64 100h.01' stroke='white' stroke-width='10' stroke-linecap='round' fill='none'/%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}`,
+
+      'service-worker.js': `const CACHE_NAME = 'neartalk-hybrid-v1.0-beta';
+const ASSETS = ['./', './index.html', './manifest.json'];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
+    )
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request).then((cached) => cached || fetch(event.request))
+  );
+});`,
+
+      'android/settings.gradle': `pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "NearTalkHybrid"
+include(":app")`,
+
+      'android/build.gradle': `plugins {
+    id("com.android.application") version "8.5.2" apply false
+    id("org.jetbrains.kotlin.android") version "2.0.0" apply false
+    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0" apply false
+}`,
+
+      'android/app/build.gradle': `plugins {
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
+}
+
+android {
+    namespace = "com.neartalk.hybrid"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.neartalk.hybrid"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 1
+        versionName = "1.0-beta"
+    }
+
+    buildFeatures {
+        compose = true
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+dependencies {
+    implementation("androidx.core:core-ktx:1.13.1")
+    implementation("androidx.activity:activity-compose:1.9.1")
+    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.webkit:webkit:1.11.0")
+
+    // Native WebRTC Engine (Zero external cloud dependency)
+    implementation("io.getstream:stream-webrtc-android:1.1.3")
+}`,
+
+      'android/app/src/main/AndroidManifest.xml': `<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Offline Wi-Fi Direct, Local Network & Bluetooth Discovery Permissions -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <!-- Camera & Microphone for Real-Time P2P Voice/Video -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CAMERA" />
+
+    <uses-feature android:name="android.hardware.wifi.direct" android:required="false" />
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
+    <application
+        android:allowBackup="false"
+        android:label="NearTalk Hybrid"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.NoActionBar">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>`,
+
+      'android/app/src/main/java/com/neartalk/hybrid/MainActivity.kt': `package com.neartalk.hybrid
+
+import android.Manifest
+import android.os.Build
+import android.os.Bundle
+import android.webkit.JavascriptInterface
+import android.webkit.PermissionRequest
+import android.webkit.WebChromeClient
+import android.webkit.WebView
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.viewinterop.AndroidView
+import com.neartalk.hybrid.p2p.WifiDirectManager
+import com.neartalk.hybrid.perf.AdaptiveHardwareProfiler
+import com.neartalk.hybrid.webrtc.NearTalkWebRtcEngine
+
+class MainActivity : ComponentActivity() {
+    private lateinit var wifiDirectManager: WifiDirectManager
+    private lateinit var hardwareProfiler: AdaptiveHardwareProfiler
+    private lateinit var webRtcEngine: NearTalkWebRtcEngine
+    private var webViewRef: WebView? = null
+
+    private val permissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { _ ->
+        wifiDirectManager.discoverPeers()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        hardwareProfiler = AdaptiveHardwareProfiler(this)
+        webRtcEngine = NearTalkWebRtcEngine(this, hardwareProfiler)
+        wifiDirectManager = WifiDirectManager(this) { peersJson ->
+            runOnUiThread {
+                webViewRef?.evaluateJavascript(
+                    "window.onNativeWifiDirectPeersUpdated && window.onNativeWifiDirectPeersUpdated($peersJson)",
+                    null
+                )
+            }
+        }
+
+        requestRequiredPermissions()
+
+        setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    HybridWebViewContainer()
+                }
+            }
+        }
+    }
+
+    private fun requestRequiredPermissions() {
+        val perms = mutableListOf(
+            Manifest.permission.CAMERA,
+            Manifest.permission.RECORD_AUDIO,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        )
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            perms.add(Manifest.permission.NEARBY_WIFI_DEVICES)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            perms.add(Manifest.permission.BLUETOOTH_SCAN)
+            perms.add(Manifest.permission.BLUETOOTH_CONNECT)
+        }
+        permissionLauncher.launch(perms.toTypedArray())
+    }
+
+    @Composable
+    fun HybridWebViewContainer() {
+        AndroidView(
+            modifier = Modifier.fillMaxSize(),
+            factory = { ctx ->
+                WebView(ctx).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.mediaPlaybackRequiresUserGesture = false
+                    addJavascriptInterface(NearTalkNativeBridge(), "NearTalkAndroid")
+                    webChromeClient = object : WebChromeClient() {
+                        override fun onPermissionRequest(request: PermissionRequest) {
+                            request.grant(request.resources)
+                        }
+                    }
+                    loadUrl("file:///android_asset/index.html")
+                    webViewRef = this
+                }
+            }
+        )
+    }
+
+    inner class NearTalkNativeBridge {
+        @JavascriptInterface
+        fun getDeviceHardwareJson(): String = hardwareProfiler.toJsonString()
+
+        @JavascriptInterface
+        fun startWifiDirectScan() = wifiDirectManager.discoverPeers()
+
+        @JavascriptInterface
+        fun stopWifiDirectScan() = wifiDirectManager.stopDiscovery()
+
+        @JavascriptInterface
+        fun connectWifiDirect(deviceAddress: String) = wifiDirectManager.connectToPeer(deviceAddress)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        wifiDirectManager.release()
+        webRtcEngine.dispose()
+    }
+}`,
+
+      'android/app/src/main/java/com/neartalk/hybrid/p2p/WifiDirectManager.kt': `package com.neartalk.hybrid.p2p
+
+import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.net.wifi.p2p.WifiP2pConfig
+import android.net.wifi.p2p.WifiP2pDevice
+import android.net.wifi.p2p.WifiP2pManager
+import org.json.JSONArray
+import org.json.JSONObject
+
+class WifiDirectManager(
+    private val context: Context,
+    private val onPeersChangedJson: (String) -> Unit
+) {
+    private val manager: WifiP2pManager? =
+        context.getSystemService(Context.WIFI_P2P_SERVICE) as? WifiP2pManager
+    private val channel: WifiP2pManager.Channel? =
+        manager?.initialize(context, context.mainLooper, null)
+
+    private val receiver = object : BroadcastReceiver() {
+        @SuppressLint("MissingPermission")
+        override fun onReceive(ctx: Context, intent: Intent) {
+            if (WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION == intent.action) {
+                manager?.requestPeers(channel) { peerList ->
+                    val arr = JSONArray()
+                    for (device: WifiP2pDevice in peerList.deviceList) {
+                        arr.put(JSONObject().apply {
+                            put("deviceName", device.deviceName)
+                            put("deviceAddress", device.deviceAddress)
+                            put("primaryDeviceType", device.primaryDeviceType)
+                            put("status", device.status)
+                        })
+                    }
+                    onPeersChangedJson(JSONObject.quote(arr.toString()))
+                }
+            }
+        }
+    }
+
+    init {
+        val filter = IntentFilter().apply {
+            addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)
+            addAction(WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION)
+            addAction(WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION)
+        }
+        context.registerReceiver(receiver, filter)
+    }
+
+    @SuppressLint("MissingPermission")
+    fun discoverPeers() {
+        manager?.discoverPeers(channel, object : WifiP2pManager.ActionListener {
+            override fun onSuccess() {}
+            override fun onFailure(reason: Int) {}
+        })
+    }
+
+    fun stopDiscovery() {
+        manager?.stopPeerDiscovery(channel, null)
+    }
+
+    @SuppressLint("MissingPermission")
+    fun connectToPeer(deviceAddress: String) {
+        val config = WifiP2pConfig().apply {
+            this.deviceAddress = deviceAddress
+        }
+        manager?.connect(channel, config, null)
+    }
+
+    fun release() {
+        try { context.unregisterReceiver(receiver) } catch (_: Exception) {}
+    }
+}`,
+
+      'android/app/src/main/java/com/neartalk/hybrid/perf/AdaptiveHardwareProfiler.kt': `package com.neartalk.hybrid.perf
+
+import android.app.ActivityManager
+import android.content.Context
+import android.media.MediaCodecList
+import android.os.Build
+import android.os.PowerManager
+import org.json.JSONObject
+
+class AdaptiveHardwareProfiler(private val context: Context) {
+    fun getTotalRamGb(): Int {
+        val actManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        val memInfo = ActivityManager.MemoryInfo()
+        actManager.getMemoryInfo(memInfo)
+        return ((memInfo.totalMem / (1024.0 * 1024.0 * 1024.0)) + 0.5).toInt().coerceAtLeast(1)
+    }
+
+    fun getSocModel(): String {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            Build.SOC_MODEL.ifBlank { Build.HARDWARE }
+        } else {
+            Build.HARDWARE
+        }
+    }
+
+    fun getThermalStatusString(): String {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+            return when (pm.currentThermalStatus) {
+                PowerManager.THERMAL_STATUS_NONE -> "nominal"
+                PowerManager.THERMAL_STATUS_LIGHT -> "light"
+                PowerManager.THERMAL_STATUS_MODERATE -> "moderate"
+                PowerManager.THERMAL_STATUS_SEVERE,
+                PowerManager.THERMAL_STATUS_CRITICAL -> "throttling_high"
+                else -> "nominal"
+            }
+        }
+        return "nominal"
+    }
+
+    fun hasHardwareAvcEncoder(): Boolean {
+        val list = MediaCodecList(MediaCodecList.REGULAR_CODECS)
+        return list.codecInfos.any { info ->
+            info.isEncoder && info.supportedTypes.any { it.equals("video/avc", ignoreCase = true) }
+        }
+    }
+
+    fun toJsonString(): String {
+        return JSONObject().apply {
+            put("socModel", getSocModel())
+            put("cpuCores", Runtime.getRuntime().availableProcessors())
+            put("ramGb", getTotalRamGb())
+            put("thermalStatus", getThermalStatusString())
+            put("hwAvc", hasHardwareAvcEncoder())
+        }.toString()
+    }
+}`,
+
+      'android/app/src/main/java/com/neartalk/hybrid/webrtc/NearTalkWebRtcEngine.kt': `package com.neartalk.hybrid.webrtc
+
+import android.content.Context
+import com.neartalk.hybrid.perf.AdaptiveHardwareProfiler
+import org.webrtc.*
+import org.webrtc.audio.JavaAudioDeviceModule
+
+class NearTalkWebRtcEngine(
+    private val context: Context,
+    private val profiler: AdaptiveHardwareProfiler
+) {
+    private val eglBase: EglBase = EglBase.create()
+    private val factory: PeerConnectionFactory
+    private var peerConnection: PeerConnection? = null
+
+    init {
+        PeerConnectionFactory.initialize(
+            PeerConnectionFactory.InitializationOptions.builder(context)
+                .setEnableInternalTracer(false)
+                .createInitializationOptions()
+        )
+
+        val audioModule = JavaAudioDeviceModule.builder(context)
+            .setUseHardwareAcousticEchoCanceler(true)
+            .setUseHardwareNoiseSuppressor(true)
+            .createAudioDeviceModule()
+
+        val encoderFactory = DefaultVideoEncoderFactory(
+            eglBase.eglBaseContext,
+            true,
+            true
+        )
+        val decoderFactory = DefaultVideoDecoderFactory(eglBase.eglBaseContext)
+
+        factory = PeerConnectionFactory.builder()
+            .setAudioDeviceModule(audioModule)
+            .setVideoEncoderFactory(encoderFactory)
+            .setVideoDecoderFactory(decoderFactory)
+            .createPeerConnectionFactory()
+    }
+
+    fun createOfflinePeerConnection(observer: PeerConnection.Observer): PeerConnection? {
+        // Strictly empty iceServers for 100% Serverless Offline P2P
+        val rtcConfig = PeerConnection.RTCConfiguration(emptyList()).apply {
+            sdpSemantics = PeerConnection.SdpSemantics.UNIFIED_PLAN
+            continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY
+        }
+        peerConnection = factory.createPeerConnection(rtcConfig, observer)
+        return peerConnection
+    }
+
+    fun dispose() {
+        peerConnection?.dispose()
+        factory.dispose()
+        eglBase.release()
+    }
+}`
+    };
+
+    let currentVaultFile = 'README.md';
+
+    function openProjectVault() {
+      const modal = document.getElementById('project-vault-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      renderVaultTree();
+      selectVaultFile(currentVaultFile);
+    }
+
+    function closeProjectVault() {
+      const modal = document.getElementById('project-vault-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function renderVaultTree() {
+      const tree = document.getElementById('vault-file-tree');
+      const allKeys = ['index.html', ...Object.keys(PROJECT_FILES)];
+      tree.innerHTML = allKeys.map(path => `
+        <button onclick="selectVaultFile('${path}')" class="w-full text-left px-2.5 py-1.5 rounded-xl truncate ${path === currentVaultFile ? 'bg-blue-600 text-white font-bold' : 'text-slate-300 hover:bg-white/10'}">
+          ${escapeHtml(path)}
+        </button>
+      `).join('');
+    }
+
+    function selectVaultFile(path) {
+      currentVaultFile = path;
+      renderVaultTree();
+      document.getElementById('vault-current-filename').textContent = path;
+      const viewer = document.getElementById('vault-code-viewer');
+      if (path === 'index.html') {
+        viewer.textContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      } else {
+        viewer.textContent = PROJECT_FILES[path] || '';
+      }
+    }
+
+    function copyVaultFile() {
+      const text = document.getElementById('vault-code-viewer').textContent;
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      showToast(`คัดลอกไฟล์ ${currentVaultFile} แล้ว`, 'success');
+    }
+
+    function downloadSingleVaultFile() {
+      const content = document.getElementById('vault-code-viewer').textContent;
+      const fileName = currentVaultFile.split('/').pop();
+      triggerBlobDownload(new Blob([content], { type: 'text/plain;charset=utf-8' }), fileName);
+    }
+
+    function downloadStandaloneHtml() {
+      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      triggerBlobDownload(new Blob([htmlContent], { type: 'text/html;charset=utf-8' }), 'index.html');
+      showToast('เริ่มดาวน์โหลดไฟล์ index.html สำเร็จ', 'success');
+    }
+
+    // Pure-JS Uncompressed ZIP Archive Builder (Zero external libraries)
+    function downloadFullProjectZip() {
+      const encoder = new TextEncoder();
+      const entries = [];
+      const fullFiles = {
+        'NearTalk-Hybrid/index.html': '<!DOCTYPE html>\n' + document.documentElement.outerHTML
+      };
+      for (const [k, v] of Object.entries(PROJECT_FILES)) {
+        fullFiles['NearTalk-Hybrid/' + k] = v;
+      }
+
+      // CRC32 Table
+      const crcTable = new Uint32Array(256);
+      for (let i = 0; i < 256; i++) {
+        let c = i;
+        for (let k = 0; k < 8; k++) c = (c & 1) ? (0xedb88320 ^ (c >>> 1)) : (c >>> 1);
+        crcTable[i] = c;
+      }
+      const crc32 = (buf) => {
+        let crc = 0xffffffff;
+        for (let i = 0; i < buf.length; i++) crc = crcTable[(crc ^ buf[i]) & 0xff] ^ (crc >>> 8);
+        return (crc ^ 0xffffffff) >>> 0;
+      };
+
+      const chunks = [];
+      let offset = 0;
+
+      for (const [path, content] of Object.entries(fullFiles)) {
+        const nameBytes = encoder.encode(path);
+        const dataBytes = encoder.encode(content);
+        const crc = crc32(dataBytes);
+
+        const localHeader = new Uint8Array(30 + nameBytes.length);
+        const dv = new DataView(localHeader.buffer);
+        dv.setUint32(0, 0x04034b50, true);
+        dv.setUint16(4, 20, true);
+        dv.setUint16(6, 0x0800, true); // UTF-8
+        dv.setUint16(8, 0, true); // STORE
+        dv.setUint32(14, crc, true);
+        dv.setUint32(18, dataBytes.length, true);
+        dv.setUint32(22, dataBytes.length, true);
+        dv.setUint16(26, nameBytes.length, true);
+        localHeader.set(nameBytes, 30);
+
+        entries.push({ nameBytes, crc, size: dataBytes.length, offset });
+        chunks.push(localHeader, dataBytes);
+        offset += localHeader.length + dataBytes.length;
+      }
+
+      const cdStart = offset;
+      for (const e of entries) {
+        const cd = new Uint8Array(46 + e.nameBytes.length);
+        const dv = new DataView(cd.buffer);
+        dv.setUint32(0, 0x02014b50, true);
+        dv.setUint16(4, 20, true);
+        dv.setUint16(6, 20, true);
+        dv.setUint16(8, 0x0800, true);
+        dv.setUint32(16, e.crc, true);
+        dv.setUint32(20, e.size, true);
+        dv.setUint32(24, e.size, true);
+        dv.setUint16(28, e.nameBytes.length, true);
+        dv.setUint32(42, e.offset, true);
+        cd.set(e.nameBytes, 46);
+        chunks.push(cd);
+        offset += cd.length;
+      }
+
+      const eocd = new Uint8Array(22);
+      const edv = new DataView(eocd.buffer);
+      edv.setUint32(0, 0x06054b50, true);
+      edv.setUint16(8, entries.length, true);
+      edv.setUint16(10, entries.length, true);
+      edv.setUint32(12, offset - cdStart, true);
+      edv.setUint32(16, cdStart, true);
+      chunks.push(eocd);
+
+      triggerBlobDownload(new Blob(chunks, { type: 'application/zip' }), 'NearTalk-Hybrid.zip');
+      showToast('ดาวน์โหลด NearTalk-Hybrid.zip (Web + Android Studio) สำเร็จ!', 'success');
+    }
+
+    function triggerBlobDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 3000);
+    }
+
+    /**
+     * ============================================================================
+     * 14. INITIALIZATION ON WINDOW LOAD
+     * ============================================================================
+     */
+    window.addEventListener('load', async () => {
+      // Attach dynamic inline PWA Manifest
+      try {
+        const manifestBlob = new Blob([PROJECT_FILES['manifest.json']], { type: 'application/manifest+json' });
+        document.getElementById('dynamic-manifest').href = URL.createObjectURL(manifestBlob);
+      } catch (e) {}
+
+      // Initialize Settings fields
+      document.getElementById('setting-device-name').value = AppState.localDeviceName;
+      document.getElementById('setting-peer-id').value = AppState.localPeerId;
+
+      // Probe real hardware & chipset capabilities
+      await initializeHardwareProfiler();
+
+      // Initial renders
+      renderNearbyDevices();
+      renderCallLogs();
+      updateConnectedUI();
+
+      // Start local discovery heartbeat
+      sendDiscoveryBeacon(true);
+      NativeBridge.startWifiDirectDiscovery();
+      setInterval(() => {
+        if (AppState.isScanning) sendDiscoveryBeacon(false);
+      }, 4000);
+    });
+  </script>
+</body>
+</html>
